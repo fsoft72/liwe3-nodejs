@@ -75,8 +75,8 @@ export const collection_add = async ( coll: DocumentCollection, data: any, force
 	let res: any;
 
 	data.updated = new Date();
-	if ( !force_insert && data._key ) {
-		res = await coll.update( data._key, data, { returnNew: true } );
+	if ( !force_insert && data._id ) {
+		res = await coll.update( data._id, data, { returnNew: true } );
 	} else {
 		data.created = new Date();
 		res = await coll.save( data, { returnNew: true } );
