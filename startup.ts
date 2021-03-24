@@ -68,7 +68,7 @@ const _startup_server = async ( cfg: ILiweConfig, forced_port: number = 0 ): Pro
 export const startup_kernel = async (): Promise<ILiWE> => {
 	const cfg: ILiweConfig = config_load( 'data', {}, true );
 
-	const ilw: ILiWE = {
+	const liwe: ILiWE = {
 		app: null,
 		app_name: cfg.app.name,
 		cfg,
@@ -78,13 +78,13 @@ export const startup_kernel = async (): Promise<ILiWE> => {
 		db: null,
 	};
 
-	ilw.cwd = path.join( __dirname, '../..' );
+	liwe.cwd = path.join( __dirname, '../..' );
 
 	const db = await require( './db_init' ).db_init( cfg );
 
-	ilw.db = db;
+	liwe.db = db;
 
-	return ilw;
+	return liwe;
 };
 
 /** @ignore */
@@ -113,8 +113,6 @@ export const startup = async ( options: LiWEServerOptions = {} ): Promise<ILiWE>
 
 	// locale( app, cfg );
 	// _session( app, cfg );
-
-
 	// const liwe_data: ILiWE = { app, cwd, app_name, cfg, port, module_init: null };
 
 	liwe.module_init = ( name: string ) => _module_init( name, liwe );
