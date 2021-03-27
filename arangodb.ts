@@ -93,6 +93,16 @@ export const collection_find_all = async ( db: Database, query: string, params: 
 	return await data.all();
 };
 
+export const collection_find_one = async ( db: Database, query: string, params: any = undefined ): Promise<any> => {
+	return new Promise( async ( resolve, reject ) => {
+		const res = await collection_find_all( db, query, params );
+
+		if ( !res || !res.length ) return resolve( null );
+
+		return resolve( res[ 0 ] );
+	} );
+};
+
 export const collection_find_by_id = async ( coll: DocumentCollection, id: string ): Promise<any> => {
 	try {
 		const res = await coll.document( id );
