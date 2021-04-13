@@ -1,10 +1,11 @@
 /** @ignore *//** */
 
-import { ILApplication } from './types';
+// import { ILApplication } from './types';
 import { arango_init, database_create, database_drop } from './arangodb';
 import { Database } from 'arangojs';
+import { ILiweConfig } from './types';
 
-export const db_init = async ( cfg: any ): Promise<Database> => {
+export const db_init = async ( cfg: ILiweConfig ): Promise<Database> => {
 	let DB_NAME = cfg.database.dbname;
 	const DB_SERVER = cfg.database.server;
 	const DB_PORT = cfg.database.port;

@@ -51,12 +51,13 @@ const _module_init = ( name: string, liwe: ILiWE ) => {
 	require( `${ mod_dirname }/endpoints` ).init( liwe );
 };
 
+/*
 const _startup_server = async ( cfg: ILiweConfig, forced_port: number = 0 ): Promise<any> => {
-	const port: number = forced_port || parseInt( process.env.PORT, 10 ) || cfg.server.port;
 	const app = express();
 
 	return app;
 };
+*/
 
 /**
  * Bootstraps the whole LiWE Framework
@@ -106,7 +107,8 @@ export const startup = async ( options: LiWEServerOptions = {} ): Promise<ILiWE>
 
 	// _socket_io_router( app, cfg );
 
-	liwe.app = await _startup_server( liwe.cfg );
+	liwe.app = express();
+	// liwe.app = await _startup_server( liwe.cfg );
 
 	make_default_dirs( upload_fullpath( 'temp' ) );
 	make_default_dirs( temp_fullpath() );
@@ -141,6 +143,9 @@ const _express_trace = ( app: ILApplication, cfg: ILiweConfig ) => {
 
 export const server = async ( modules: string[], options: LiWEServerOptions = {} ): Promise<ILiWE> => {
 	const liwe = await startup( options );
+	const port: number = parseInt( process.env.PORT, 10 ) || liwe.cfg.server.port;
+
+	liwe.port = port;
 
 	augment_request( liwe.app, liwe.cfg, liwe.db );
 	_cors( liwe.app, liwe.cfg );
