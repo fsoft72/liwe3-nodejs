@@ -27,6 +27,15 @@ export const md5 = ( txt: string, do_check: boolean = true ) => {
 	return crypto.createHash( 'md5' ).update( txt ).digest( 'hex' );
 };
 
+export const sha512 = ( txt: string, do_check: boolean = true ) => {
+	if ( !txt || txt?.length == 0 ) return '';
+
+	const crypto = require( 'crypto' );
+
+	if ( do_check && /^[a-z0-9]{128}$/.test( txt ) ) return txt;
+	return crypto.createHash( 'sha512' ).update( txt ).digest( 'hex' );
+};
+
 /**
  * This function returns an error to Express
  *
@@ -421,7 +430,7 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 		let v = dct[ field.name ];
 		const type = field.type.toLowerCase();
 
-		if ( v === undefined ) v = field.default;
+		if ( v === undefined || v === null ) v = field.default;
 
 		if ( v === undefined && field.required )
 			console.error( "ERROR: missing field: ", field.name );
