@@ -203,8 +203,9 @@ export const rand_int = ( min: number = 0, max: number = 100 ): number => {
  */
 export const unique_code = (): string => {
 	const now = new Date();
-	const n = now.getTime();
-	return ( Math.floor( Math.random() * 10 ) + n ).toString( 36 );
+	const n = now.getTime() + now.getMilliseconds();
+
+	return ( rand_int( 0, n ) + n ).toString( 36 );
 };
 
 /**
