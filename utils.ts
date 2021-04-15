@@ -89,6 +89,12 @@ export const send_html = ( res: express.Response, payload: string, status_code: 
 	res.status( status_code ).send( payload );
 };
 
+export const send_binary = ( res: express.Response, buffer: any, content_type: string, filename: string ) => {
+	res.set( 'Content-Type', content_type );
+	res.set( 'Content-Disposition', `attachment; filename=${ filename }` );
+	res.status( 200 ).end( Buffer.from( buffer ) );
+};
+
 /**
  * sends an email using settings from `cfg.smtp`
  *
