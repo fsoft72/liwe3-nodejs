@@ -2,12 +2,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 // import { unique_code } from './utils';
 
-export const unlink = (path: string): void => {
-	if (fs.existsSync(path)) fs.unlinkSync(path);
+export const unlink = ( path: string ): void => {
+	if ( fs.existsSync( path ) ) fs.unlinkSync( path );
 };
 
-export const exists = (path: string): boolean => {
-	return fs.existsSync(path);
+export const exists = ( path: string ): boolean => {
+	return fs.existsSync( path );
 };
 
 /**
@@ -17,38 +17,38 @@ export const exists = (path: string): boolean => {
  * @param mode - [0o755] directory mode
  * @param recursive - [true] if missing sub dirs should be created.
  */
-export const mkdir = (dirname: string, mode: number = 0o755, recursive: boolean = true) => {
+export const mkdir = ( dirname: string, mode: number = 0o755, recursive: boolean = true ) => {
 	const options = { recursive, mode };
 
-	if (!exists(dirname)) fs.mkdirSync(dirname, options);
+	if ( !exists( dirname ) ) fs.mkdirSync( dirname, options );
 };
 
-export const rmdir = (dirname: string) => {
-	if (exists(dirname)) fs.rmdirSync(dirname);
+export const rmdir = ( dirname: string ) => {
+	if ( exists( dirname ) ) fs.rmdirSync( dirname );
 };
 
-export const rm = (fname: string) => {
-	if (exists(fname)) fs.unlinkSync(fname);
+export const rm = ( fname: string ) => {
+	if ( exists( fname ) ) fs.unlinkSync( fname );
 };
 
-export const readdir = (dirname: string): string[] => {
-	if (!exists(dirname)) return [];
+export const readdir = ( dirname: string ): string[] => {
+	if ( !exists( dirname ) ) return [];
 
-	return fs.readdirSync(dirname);
+	return fs.readdirSync( dirname );
 };
 
-export const read = (fname: string): string => {
-	if (!exists(fname)) return '';
+export const read = ( fname: string ): string => {
+	if ( !exists( fname ) ) return '';
 
-	return fs.readFileSync(fname, { encoding: 'utf8' }).toString();
+	return fs.readFileSync( fname, { encoding: 'utf8' } ).toString();
 };
 
-export const abspath = (rel_path: string): string => {
-	return path.resolve(rel_path);
+export const abspath = ( rel_path: string ): string => {
+	return path.resolve( rel_path );
 };
 
-export const rename = (old_path: string, new_path: string): void => {
-	return fs.renameSync(old_path, new_path);
+export const rename = ( old_path: string, new_path: string ): void => {
+	return fs.renameSync( old_path, new_path );
 };
 
 /**
@@ -59,28 +59,32 @@ export const rename = (old_path: string, new_path: string): void => {
  * @param old_path:  original file name to move
  * @param new_path:  destination file name
  */
-export const move = (old_path: string, new_path: string): boolean => {
-	if (!exists(old_path)) return false;
+export const move = ( old_path: string, new_path: string ): boolean => {
+	if ( !exists( old_path ) ) return false;
 
 	try {
-		rename(old_path, new_path);
+		rename( old_path, new_path );
 		return true;
 		// eslint-disable-next-line no-empty
-	} catch (e) {}
+	} catch ( e ) { }
 
 	// If rename() doesn't work, we are on multiple devices / disks
-	fs.copyFileSync(old_path, new_path);
-	rm(old_path);
+	fs.copyFileSync( old_path, new_path );
+	rm( old_path );
 
 	return true;
 };
 
-export const write = (full_path: string, data: string): void => {
-	return fs.writeFileSync(full_path, data);
+export const write = ( full_path: string, data: string ): void => {
+	return fs.writeFileSync( full_path, data );
 };
 
-export const stat = (full_path: string) => {
-	return fs.lstatSync(full_path);
+export const stat = ( full_path: string ) => {
+	return fs.lstatSync( full_path );
+};
+
+export const basename = ( full_path: string ) => {
+	return path.basename( full_path );
 };
 
 /**
