@@ -7,8 +7,8 @@ import { ILiweConfig } from './types';
 
 export const db_init = async ( cfg: ILiweConfig ): Promise<Database> => {
 	let DB_NAME = cfg.database.dbname;
-	const DB_SERVER = cfg.database.server;
-	const DB_PORT = cfg.database.port;
+	// const DB_SERVER = cfg.database.server;
+	// const DB_PORT = cfg.database.port;
 
 	const adb = await arango_init( cfg );
 
