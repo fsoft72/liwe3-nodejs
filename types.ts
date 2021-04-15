@@ -103,6 +103,7 @@ export interface ILiweConfig {
 		port: number;
 		url: string;
 		public_url: string;
+		public_name: string;
 		use_domains: boolean;
 		return_domains: boolean;
 		domain: string;
