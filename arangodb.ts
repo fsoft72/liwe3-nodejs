@@ -125,6 +125,20 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
 	return coll;
 };
 
+export const prepare_filters = ( prefix: string, data: any ) => {
+	const values: any = {};
+	const filters: string[] = [];
+
+	Object.keys( data ).forEach( ( k ) => {
+		if ( typeof ( data[ k ] ) == 'undefined' ) return;
+
+		values[ k ] = data[ k ];
+		filters.push( `FILTER ${ prefix }.${ k } == @${ k }` );
+	} );
+
+	return [ filters.join( ' ' ), values ];
+};
+
 /*
 const user_init_db = async ( db: Database ) => {
 	const coll = collection_init( db, "users", [
