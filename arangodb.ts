@@ -86,6 +86,19 @@ export const collection_add = async ( coll: DocumentCollection, data: any, force
 	return res;
 };
 
+export const collection_add_all = async ( coll: DocumentCollection, data: any ): Promise<any> => {
+	let res: any;
+
+	data.forEach( ( e: any ) => {
+		e.updated = new Date();
+		e.created = new Date();
+	} );
+
+	res = await coll.saveAll( data, { returnNew: true } );
+
+	return res;
+};
+
 export const collection_find_all = async ( db: Database, query: string, params: any = undefined ): Promise<any> => {
 	console.log( "AQL query: ", query, params );
 	const data: any = await db.query( query, params ); //, { count: true } );
