@@ -207,11 +207,15 @@ export const rand_int = ( min: number = 0, max: number = 100 ): number => {
  *
  * @returns the unique string generated
  */
-export const unique_code = (): string => {
+export const unique_code = ( simple: boolean = true ): string => {
 	const now = new Date();
 	const n = now.getTime() + now.getMilliseconds();
 
-	return ( rand_int( 0, n ) + n ).toString( 36 );
+	const c = ( rand_int( 0, n ) + n ).toString( 36 );
+
+	if ( simple ) return c;
+
+	return md5( c );
 };
 
 /**
@@ -502,6 +506,9 @@ export const date_format = ( date: any, format = 'yyyy-mm-dd HH:MM:SS' ): string
 	return isValidDate( datetime ) ? _formatDatetime( datetime, format ) : '';
 };
 
+export const isValidEmail = ( email: string ): boolean => {
+	return !!email.match( /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ );
+};
 
 export const int = ( s: any ): number => {
 	return parseInt( s.toString(), 10 );
