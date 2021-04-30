@@ -5,6 +5,7 @@ import * as express from 'express';
 import * as fs from './fs';
 import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfig, LiWEServerOptions } from './types';
 import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, module_fullpath, config_load } from './liwe';
+import Defender, { applySettings, add_suspicious_activity } from './defender';
 // import { SocketIORouter } from './socketio';
 
 /** @ignore */
@@ -35,6 +36,7 @@ const augment_request = ( app: ILApplication, cfg: ILiweConfig, db: any ) => {
 	app.use( ( req: ILRequest, res: ILResponse, next: ILNextFunction ) => {
 		req.cfg = cfg;
 		req.db = db;
+		req.res = res;
 		// req.socketio = app.socket;
 		next();
 	} );
@@ -148,6 +150,10 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 	liwe.port = port;
 
 	augment_request( liwe.app, liwe.cfg, liwe.db );
+	liwe.app.use( Defender );
+	applySettings( {
+		dropSuspiciousRequest: true
+	} as any );
 	_cors( liwe.app, liwe.cfg );
 
 	// This line parses JSON requests
