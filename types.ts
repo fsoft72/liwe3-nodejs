@@ -29,6 +29,9 @@ export interface ILRequest extends express.Request {
 	/** the main connection to db */
 	db?: any;
 
+	/** The Response */
+	res: ILResponse;
+
 	/** The instance of the SocketIORouter (if enabled) */
 	// socketio?: SocketIORouter;
 
