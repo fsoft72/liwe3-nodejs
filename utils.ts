@@ -45,6 +45,8 @@ export const sha512 = ( txt: string, do_check: boolean = true ) => {
  *
  */
 export const send_error = ( res: express.Response, error: any, error_code: number = 401 ) => {
+	if ( res.headersSent ) return;
+
 	if ( !error ) error = {};
 
 	const err = { error_message: error, error_code: error_code };
