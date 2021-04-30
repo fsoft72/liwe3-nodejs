@@ -86,6 +86,19 @@ export const collection_add = async ( coll: DocumentCollection, data: any, force
 	return res;
 };
 
+export const collection_add_all = async ( coll: DocumentCollection, data: any ): Promise<any> => {
+	let res: any;
+
+	data.forEach( ( e: any ) => {
+		e.updated = new Date();
+		e.created = new Date();
+	} );
+
+	res = await coll.saveAll( data, { returnNew: true } );
+
+	return res;
+};
+
 export const collection_find_all = async ( db: Database, query: string, params: any = undefined ): Promise<any> => {
 	console.log( "AQL query: ", query, params );
 	const data: any = await db.query( query, params ); //, { count: true } );
@@ -123,6 +136,20 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
 	}
 
 	return coll;
+};
+
+export const prepare_filters = ( prefix: string, data: any ) => {
+	const values: any = {};
+	const filters: string[] = [];
+
+	Object.keys( data ).forEach( ( k ) => {
+		if ( typeof ( data[ k ] ) == 'undefined' ) return;
+
+		values[ k ] = data[ k ];
+		filters.push( `FILTER ${ prefix }.${ k } == @${ k }` );
+	} );
+
+	return [ filters.join( ' ' ), values ];
 };
 
 /*
