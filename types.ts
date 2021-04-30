@@ -170,6 +170,8 @@ export interface ILiweConfig {
 		users: ILiWEDefaultUser[];
 		otl_new_on_login: boolean;
 		otl_keep_the_same: boolean;
+		secure_passwords: boolean;
+		password_min_len: number;
 	};
 
 	features: {
