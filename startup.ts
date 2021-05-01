@@ -5,7 +5,8 @@ import * as express from 'express';
 import * as fs from './fs';
 import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfig, LiWEServerOptions } from './types';
 import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, module_fullpath, config_load } from './liwe';
-import Defender, { applySettings, add_suspicious_activity } from './defender';
+import Defender, { applySettings } from './defender';
+import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
 // import { SocketIORouter } from './socketio';
 
 /** @ignore */
@@ -144,7 +145,7 @@ const _express_trace = ( app: ILApplication, cfg: ILiweConfig ) => {
 };
 
 const _defender = ( app: ILApplication, cfg: ILiweConfig ) => {
-	if ( !cfg.security.defender ) {
+	if ( !cfg.security.defender.enabled ) {
 		console.warn( "WARNING: Defender disabled" );
 		return;
 	}
@@ -159,6 +160,20 @@ const _defender = ( app: ILApplication, cfg: ILiweConfig ) => {
 	} );
 };
 
+const _throttler = ( app: ILApplication, cfg: ILiweConfig ) => {
+	if ( !cfg.security.throttler.enabled ) {
+		console.warn( "WARNING: Throttler disabled" );
+		return;
+	}
+
+	app.use( Throttler );
+	applyThrottlerSettings( {
+		requestCount: cfg.security.throttler.request_count,
+		requestInterval: cfg.security.throttler.request_interval,
+		waitTime: cfg.security.throttler.wait_time
+	} );
+};
+
 export const server = async ( modules: string[], options: LiWEServerOptions = {} ): Promise<ILiWE> => {
 	const liwe = await startup( options );
 	const port: number = parseInt( process.env.PORT, 10 ) || liwe.cfg.server.port;
@@ -166,7 +181,9 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 	liwe.port = port;
 
 	augment_request( liwe.app, liwe.cfg, liwe.db );
+
 	_defender( liwe.app, liwe.cfg );
+	_throttler( liwe.app, liwe.cfg );
 
 	_cors( liwe.app, liwe.cfg );
 

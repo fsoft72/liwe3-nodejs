@@ -141,6 +141,16 @@ export interface ILiweConfig {
 			suspicious_timeout: number;
 			parse_fragments: boolean;
 		};
+
+		throttler: {
+			enabled: boolean;
+			/** Number of request before throttling */
+			request_count: number;
+			/** Time in millis before each request */
+			request_interval: number;
+			/** Throttle time in millis */
+			wait_time: number;
+		};
 	};
 
 	database: {
