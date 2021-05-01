@@ -132,6 +132,14 @@ export interface ILiweConfig {
 		auth_token: string[];
 
 		check_permissions: boolean;
+
+		defender: {
+			enabled: boolean;
+			drop_requests: boolean;
+			max_attempts: number;
+			blacklist_timeout: number;
+			parse_fragments: boolean;
+		};
 	};
 
 	database: {
@@ -174,7 +182,11 @@ export interface ILiweConfig {
 		otl_new_on_login: boolean;
 		otl_keep_the_same: boolean;
 		secure_passwords: boolean;
-		password_min_len: number;
+		password: {
+			enforce: boolean;
+			min_len: number;
+			secure: boolean;
+		};
 	};
 
 	features: {
