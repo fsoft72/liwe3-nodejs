@@ -154,7 +154,8 @@ const _defender = ( app: ILApplication, cfg: ILiweConfig ) => {
 		blacklistTimeout: cfg.security.defender.blacklist_timeout,
 		maxAttempts: cfg.security.defender.max_attempts,
 		parseFragments: cfg.security.defender.parse_fragments,
-		dropSuspiciousRequest: cfg.security.defender.drop_requests
+		dropSuspiciousRequest: cfg.security.defender.drop_requests,
+		suspiciousTimeout: cfg.security.defender.suspicious_timeout,
 	} );
 };
 

@@ -138,6 +138,7 @@ export interface ILiweConfig {
 			drop_requests: boolean;
 			max_attempts: number;
 			blacklist_timeout: number;
+			suspicious_timeout: number;
 			parse_fragments: boolean;
 		};
 	};
