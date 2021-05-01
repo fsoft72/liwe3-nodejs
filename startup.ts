@@ -143,6 +143,21 @@ const _express_trace = ( app: ILApplication, cfg: ILiweConfig ) => {
 	}
 };
 
+const _defender = ( app: ILApplication, cfg: ILiweConfig ) => {
+	if ( !cfg.security.defender ) {
+		console.warn( "WARNING: Defender disabled" );
+		return;
+	}
+
+	app.use( Defender );
+	applySettings( {
+		blacklistTimeout: cfg.security.defender.blacklist_timeout,
+		maxAttempts: cfg.security.defender.max_attempts,
+		parseFragments: cfg.security.defender.parse_fragments,
+		dropSuspiciousRequest: cfg.security.defender.drop_requests
+	} );
+};
+
 export const server = async ( modules: string[], options: LiWEServerOptions = {} ): Promise<ILiWE> => {
 	const liwe = await startup( options );
 	const port: number = parseInt( process.env.PORT, 10 ) || liwe.cfg.server.port;
@@ -150,10 +165,8 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 	liwe.port = port;
 
 	augment_request( liwe.app, liwe.cfg, liwe.db );
-	liwe.app.use( Defender );
-	applySettings( {
-		dropSuspiciousRequest: true
-	} as any );
+	_defender( liwe.app, liwe.cfg );
+
 	_cors( liwe.app, liwe.cfg );
 
 	// This line parses JSON requests
