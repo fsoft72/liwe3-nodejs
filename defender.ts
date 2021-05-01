@@ -10,6 +10,10 @@ const real_ip = ( ipAddr: string ) => {
 	return g[ 1 ];
 };
 
+export const get_real_ip = ( request: ILRequest ): string => {
+	return real_ip( ( request.headers[ 'x-forwarded-for' ] ? request.headers[ 'x-forwarded-for' ][ 0 ] : null ) || request.socket.remoteAddress );
+};
+
 interface DefenderSettings {
 	/** Drop suspicious request if maxAttempts reached */
 	dropSuspiciousRequest: boolean;
@@ -153,7 +157,7 @@ const _ip_limit_reached = ( ipAddress: string ): boolean => {
 
 const Defender = ( request: ILRequest, response: ILResponse, next: any ) => {
 	let url = request.originalUrl;
-	const ip = real_ip( ( request.headers[ 'x-forwarded-for' ] ? request.headers[ 'x-forwarded-for' ][ 0 ] : null ) || request.socket.remoteAddress );
+	const ip = get_real_ip( request );
 
 	console.log( "---- REQUEST URL: ", url, ip );
 
@@ -211,7 +215,7 @@ const _handle_suspicious_request = ( request: ILRequest, response: ILResponse, n
  * if it returns `true`, it means that ip reached threshold
  */
 export const add_suspicious_activity = ( request: ILRequest, response: ILResponse, message: string ): boolean => {
-	const ip = real_ip( ( request.headers[ 'x-forwarded-for' ] ? request.headers[ 'x-forwarded-for' ][ 0 ] : null ) || request.socket.remoteAddress );
+	const ip = get_real_ip( request );
 	const thresholdReached = _ip_limit_reached( ip );
 
 	if ( thresholdReached && settings.onMaxAttemptsReached != null ) {
