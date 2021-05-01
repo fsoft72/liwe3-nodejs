@@ -107,31 +107,6 @@ export const blacklist_ip_list = () => {
  */
 export const applySettings = ( _settings: DefenderSettings ) => {
 	settings = { ...settings, ..._settings };
-	return;
-
-	if ( _settings.dropSuspiciousRequest !== undefined ) {
-		settings.dropSuspiciousRequest = _settings.dropSuspiciousRequest;
-	}
-
-	if ( _settings.onMaxAttemptsReached != undefined ) {
-		settings.onMaxAttemptsReached = _settings.onMaxAttemptsReached;
-	}
-
-	if ( _settings.maxAttempts != undefined ) {
-		settings.maxAttempts = _settings.maxAttempts;
-	}
-
-	if ( _settings.blacklistTimeout != undefined ) {
-		settings.blacklistTimeout = _settings.blacklistTimeout;
-	}
-
-	if ( _settings.suspiciousTimeout != undefined ) {
-		settings.suspiciousTimeout = _settings.suspiciousTimeout;
-	}
-
-	if ( _settings.parseFragments != undefined ) {
-		settings.parseFragments = _settings.parseFragments;
-	}
 };
 
 const _readable_address = ( request: ILRequest ) => {
@@ -171,7 +146,7 @@ const Defender = ( request: ILRequest, response: ILResponse, next: any ) => {
 	let url = request.originalUrl;
 	const ip = get_real_ip( request );
 
-	console.log( "---- REQUEST URL: ", url, ip, settings );
+	// console.log( "---- REQUEST URL: ", url, ip, settings );
 
 	const b_ip: Date = _blacklist_ips[ ip ];
 	if ( b_ip ) {
@@ -241,12 +216,12 @@ export const add_suspicious_activity = ( request: ILRequest, response: ILRespons
 		}
 		catch ( error ) {
 			// this.logEvent( 'warn', 'An error occurred while executing onMaxAttemptsReached callback: ' + error );
-			console.log( 'warn', 'An error occurred while executing onMaxAttemptsReached callback: ' + error );
+			console.warn( 'An error occurred while executing onMaxAttemptsReached callback: ' + error );
 		}
 	}
 
 	// this.logEvent( 'warn', message );
-	console.log( 'warn', message );
+	console.warn( message );
 
 	// Add IP to blacklist
 	if ( thresholdReached )
@@ -254,7 +229,7 @@ export const add_suspicious_activity = ( request: ILRequest, response: ILRespons
 
 	if ( thresholdReached && settings.dropSuspiciousRequest ) {
 		// this.logEvent( 'warn', 'Dropping request ' + request.originalUrl + ' from ' + this.getHumanReadableAddress( request ) );
-		console.log( 'warn', 'Dropping request ' + request.originalUrl + ' from ' + ip );
+		console.warn( 'Dropping request ' + request.originalUrl + ' from ' + ip );
 
 		delete _suspicious_requests[ ip ];
 
