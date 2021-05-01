@@ -27,6 +27,9 @@ interface DefenderSettings {
 	/** How much time the IP will be blacklisted */
 	blacklistTimeout: number;
 
+	/** How much time the suspicious request should count */
+	suspiciousTimeout: number;
+
 	/** If URL parsing should be run against fragments */
 	parseFragments: boolean;
 
@@ -34,12 +37,13 @@ interface DefenderSettings {
 	onMaxAttemptsReached?: ( ip_addr: string, url: string ) => void;
 }
 
-const settings: DefenderSettings = {
+let settings: DefenderSettings = {
 	dropSuspiciousRequest: false,
 	logFile: null,
 	maxAttempts: 5,
 	onMaxAttemptsReached: null,
 	blacklistTimeout: 30000,
+	suspiciousTimeout: 500,
 	parseFragments: true
 };
 
@@ -66,13 +70,13 @@ const suspiciousUrlFragments = [
 	}
 ];
 
-interface BlackListCandidate {
+interface SuspiciousRequestInfo {
 	ipAddress: string;
-	attemptCount: number;
+	date: Date;
 }
 
 // Candidates to be put on blacklist: IP => AttemptCount association - once we reach maxAttempts for an IP, we block it
-const _blacklist_candidates: any = {};
+const _suspicious_requests: any = {};
 const _blacklist_ips: any = {};
 
 /**
@@ -102,6 +106,9 @@ export const blacklist_ip_list = () => {
  * Changes Defender's settings
  */
 export const applySettings = ( _settings: DefenderSettings ) => {
+	settings = { ...settings, ..._settings };
+	return;
+
 	if ( _settings.dropSuspiciousRequest !== undefined ) {
 		settings.dropSuspiciousRequest = _settings.dropSuspiciousRequest;
 	}
@@ -114,10 +121,16 @@ export const applySettings = ( _settings: DefenderSettings ) => {
 		settings.maxAttempts = _settings.maxAttempts;
 	}
 
-	if ( _settings.logFile != undefined ) {
-		settings.logFile = _settings.logFile;
-		// settings.fs = require( 'fs' );
-		// this.fileAppender = this.fs.appendFile;
+	if ( _settings.blacklistTimeout != undefined ) {
+		settings.blacklistTimeout = _settings.blacklistTimeout;
+	}
+
+	if ( _settings.suspiciousTimeout != undefined ) {
+		settings.suspiciousTimeout = _settings.suspiciousTimeout;
+	}
+
+	if ( _settings.parseFragments != undefined ) {
+		settings.parseFragments = _settings.parseFragments;
 	}
 };
 
@@ -130,22 +143,25 @@ const _readable_address = ( request: ILRequest ) => {
 };
 
 const _ip_limit_reached = ( ipAddress: string ): boolean => {
-	let candidate: BlackListCandidate = _blacklist_candidates[ ipAddress ];
+	let susp_reqs: SuspiciousRequestInfo[] = _suspicious_requests[ ipAddress ];
+	const candidate: SuspiciousRequestInfo = {
+		ipAddress,
+		date: new Date( new Date().getTime() + settings.suspiciousTimeout )
+	};
 
-	if ( !candidate ) {
-		candidate = {
-			ipAddress,
-			attemptCount: 1
-		};
-
-		_blacklist_candidates[ ipAddress ] = candidate;
+	if ( !susp_reqs ) {
+		_suspicious_requests[ ipAddress ] = [ candidate ];
 
 		return ( settings.maxAttempts == 1 );
 	}
 
-	candidate.attemptCount += 1;
+	const now = new Date();
+	susp_reqs = susp_reqs.filter( ( req ) => req.date > now );
+	susp_reqs.push( candidate );
 
-	if ( candidate.attemptCount == settings.maxAttempts )
+	_suspicious_requests[ ipAddress ] = susp_reqs;
+
+	if ( susp_reqs.length == settings.maxAttempts )
 		return true;
 
 	return false;
@@ -155,15 +171,16 @@ const Defender = ( request: ILRequest, response: ILResponse, next: any ) => {
 	let url = request.originalUrl;
 	const ip = get_real_ip( request );
 
-	console.log( "---- REQUEST URL: ", url, ip );
+	console.log( "---- REQUEST URL: ", url, ip, settings );
 
 	const b_ip: Date = _blacklist_ips[ ip ];
 	if ( b_ip ) {
 		const d: number = new Date().getTime();
 		const diff = d - b_ip.getTime();
+
 		console.warn( "IP Blacklisted: ", ip, b_ip, diff );
 
-		if ( !settings.blacklistTimeout || settings.blacklistTimeout > diff ) {
+		if ( !settings.blacklistTimeout || diff < 0 ) {
 			response.status( 403 ).send( 'IP is blacklisted' );
 			return;
 		}
@@ -233,13 +250,13 @@ export const add_suspicious_activity = ( request: ILRequest, response: ILRespons
 
 	// Add IP to blacklist
 	if ( thresholdReached )
-		blacklist_ip( ip, 0 );
+		blacklist_ip( ip, settings.blacklistTimeout );
 
 	if ( thresholdReached && settings.dropSuspiciousRequest ) {
 		// this.logEvent( 'warn', 'Dropping request ' + request.originalUrl + ' from ' + this.getHumanReadableAddress( request ) );
 		console.log( 'warn', 'Dropping request ' + request.originalUrl + ' from ' + ip );
 
-		delete _blacklist_candidates[ ip ];
+		delete _suspicious_requests[ ip ];
 
 		response.status( 403 ).send( 'Untrusted Request Detected' );
 		return true;
