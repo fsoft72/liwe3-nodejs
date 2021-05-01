@@ -19,28 +19,28 @@ interface DefenderSettings {
 	dropSuspiciousRequest: boolean;
 
 	/** If specified, we store logs in this file */
-	logFile: string;
+	logFile?: string;
 
 	/** If specified, we store logs in this file */
 	maxAttempts: number;
 
-	/** Console logging */
-	consoleLogging: boolean;
-
 	/** How much time the IP will be blacklisted */
 	blacklistTimeout: number;
 
+	/** If URL parsing should be run against fragments */
+	parseFragments: boolean;
+
 	/** A callback(ipAddress, url) that is triggered once an attacker from an IP has reached the maximum number of attempts */
-	onMaxAttemptsReached: ( ip_addr: string, url: string ) => void;
+	onMaxAttemptsReached?: ( ip_addr: string, url: string ) => void;
 }
 
 const settings: DefenderSettings = {
 	dropSuspiciousRequest: false,
 	logFile: null,
 	maxAttempts: 5,
-	consoleLogging: true,
 	onMaxAttemptsReached: null,
 	blacklistTimeout: 30000,
+	parseFragments: true
 };
 
 interface SuspiciousFragment {
@@ -104,10 +104,6 @@ export const blacklist_ip_list = () => {
 export const applySettings = ( _settings: DefenderSettings ) => {
 	if ( _settings.dropSuspiciousRequest !== undefined ) {
 		settings.dropSuspiciousRequest = _settings.dropSuspiciousRequest;
-	}
-
-	if ( _settings.consoleLogging !== undefined ) {
-		settings.consoleLogging = _settings.consoleLogging;
 	}
 
 	if ( _settings.onMaxAttemptsReached != undefined ) {
@@ -180,22 +176,24 @@ const Defender = ( request: ILRequest, response: ILResponse, next: any ) => {
 		return;
 	}
 
-	url = url.toLowerCase();
+	if ( settings.parseFragments ) {
+		url = url.toLowerCase();
 
-	suspiciousUrlFragments.forEach( ( fragment ) => {
-		const category = fragment.category;
-		const patterns = fragment.patterns;
+		suspiciousUrlFragments.forEach( ( fragment ) => {
+			const category = fragment.category;
+			const patterns = fragment.patterns;
 
-		patterns.forEach( ( pattern ) => {
-			pattern = pattern.toLowerCase();
+			patterns.forEach( ( pattern ) => {
+				pattern = pattern.toLowerCase();
 
-			if ( url.indexOf( pattern ) != -1 || decodeURI( url ).indexOf( pattern ) != -1 ) {
-				_handle_suspicious_request( request, response, next, category, pattern );
-				return;
-			}
+				if ( url.indexOf( pattern ) != -1 || decodeURI( url ).indexOf( pattern ) != -1 ) {
+					_handle_suspicious_request( request, response, next, category, pattern );
+					return;
+				}
+			} );
+
 		} );
-
-	} );
+	}
 
 	next();
 };
