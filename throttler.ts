@@ -44,9 +44,7 @@ const _ip_request_limit_reached = ( ipAddress: string ): boolean => {
 	}
 
 	const now = new Date();
-	console.log( "THR 1: ", requests );
 	requests = requests.filter( ( req ) => req.date > now );
-	console.log( "THR 2: ", requests );
 	requests.push( req_info );
 
 	_requests_info[ ipAddress ] = requests;
