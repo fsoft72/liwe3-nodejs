@@ -2,6 +2,14 @@ import { ILRequest, ILResponse } from "./types";
 
 // var chalk = require( 'chalk' );
 
+const _ip_re = /((\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5])))/;
+
+const real_ip = ( ipAddr: string ) => {
+	const g = ipAddr.match( _ip_re );
+
+	return g[ 1 ];
+};
+
 interface DefenderSettings {
 	/** Drop suspicious request if maxAttempts reached */
 	dropSuspiciousRequest: boolean;
@@ -60,9 +68,35 @@ interface BlackListCandidate {
 }
 
 // Candidates to be put on blacklist: IP => AttemptCount association - once we reach maxAttempts for an IP, we block it
-const blacklistCandidates: any = {};
-const blacklistIPs: any = {};
+const _blacklist_candidates: any = {};
+const _blacklist_ips: any = {};
 
+/**
+ * Add an IP address to blacklist
+ *
+ * Parameters:
+ *
+ * - ip_addr   - The IP to blacklist
+ * - duration  - Time in millis of the blacklist
+ */
+export const blacklist_ip = ( ip_addr: string, duration: number ) => {
+	var newDateObj = new Date( new Date().getTime() + duration );
+	_blacklist_ips[ ip_addr ] = newDateObj;
+};
+
+export const blacklist_ip_list = () => {
+	const ips: { ip: string, date: Date; }[] = [];
+
+	Object.keys( _blacklist_ips ).forEach( ( ip: string ) => {
+		ips.push( { ip, date: _blacklist_ips[ ip ] } );
+	} );
+
+	return ips;
+};
+
+/**
+ * Changes Defender's settings
+ */
 export const applySettings = ( _settings: DefenderSettings ) => {
 	if ( _settings.dropSuspiciousRequest !== undefined ) {
 		settings.dropSuspiciousRequest = _settings.dropSuspiciousRequest;
@@ -96,7 +130,7 @@ const _readable_address = ( request: ILRequest ) => {
 };
 
 const _ip_limit_reached = ( ipAddress: string ): boolean => {
-	let candidate: BlackListCandidate = blacklistCandidates[ ipAddress ];
+	let candidate: BlackListCandidate = _blacklist_candidates[ ipAddress ];
 
 	if ( !candidate ) {
 		candidate = {
@@ -104,7 +138,7 @@ const _ip_limit_reached = ( ipAddress: string ): boolean => {
 			attemptCount: 1
 		};
 
-		blacklistCandidates[ ipAddress ] = candidate;
+		_blacklist_candidates[ ipAddress ] = candidate;
 
 		return ( settings.maxAttempts == 1 );
 	}
@@ -119,11 +153,11 @@ const _ip_limit_reached = ( ipAddress: string ): boolean => {
 
 const Defender = ( request: ILRequest, response: ILResponse, next: any ) => {
 	let url = request.originalUrl;
-	const ip = ( request.headers[ 'x-forwarded-for' ] ? request.headers[ 'x-forwarded-for' ][ 0 ] : null ) || request.socket.remoteAddress;
+	const ip = real_ip( ( request.headers[ 'x-forwarded-for' ] ? request.headers[ 'x-forwarded-for' ][ 0 ] : null ) || request.socket.remoteAddress );
 
 	console.log( "---- REQUEST URL: ", url, ip );
 
-	const b_ip: Date = blacklistIPs[ ip ];
+	const b_ip: Date = _blacklist_ips[ ip ];
 	if ( b_ip ) {
 		const d: number = new Date().getTime();
 		const diff = d - b_ip.getTime();
@@ -134,7 +168,7 @@ const Defender = ( request: ILRequest, response: ILResponse, next: any ) => {
 			return;
 		}
 
-		delete blacklistIPs[ ip ];
+		delete _blacklist_ips[ ip ];
 	}
 
 	if ( !url ) {
@@ -177,7 +211,7 @@ const _handle_suspicious_request = ( request: ILRequest, response: ILResponse, n
  * if it returns `true`, it means that ip reached threshold
  */
 export const add_suspicious_activity = ( request: ILRequest, response: ILResponse, message: string ): boolean => {
-	const ip = ( request.headers[ 'x-forwarded-for' ] ? request.headers[ 'x-forwarded-for' ][ 0 ] : null ) || request.socket.remoteAddress;
+	const ip = real_ip( ( request.headers[ 'x-forwarded-for' ] ? request.headers[ 'x-forwarded-for' ][ 0 ] : null ) || request.socket.remoteAddress );
 	const thresholdReached = _ip_limit_reached( ip );
 
 	if ( thresholdReached && settings.onMaxAttemptsReached != null ) {
@@ -196,15 +230,14 @@ export const add_suspicious_activity = ( request: ILRequest, response: ILRespons
 	console.log( 'warn', message );
 
 	// Add IP to blacklist
-	if ( thresholdReached ) {
-		blacklistIPs[ ip ] = new Date();
-	}
+	if ( thresholdReached )
+		blacklist_ip( ip, 0 );
 
 	if ( thresholdReached && settings.dropSuspiciousRequest ) {
 		// this.logEvent( 'warn', 'Dropping request ' + request.originalUrl + ' from ' + this.getHumanReadableAddress( request ) );
-		console.log( 'warn', 'Dropping request ' + request.originalUrl + ' from ' + _readable_address( request ) );
+		console.log( 'warn', 'Dropping request ' + request.originalUrl + ' from ' + ip );
 
-		delete blacklistCandidates[ ip ];
+		delete _blacklist_candidates[ ip ];
 
 		response.status( 403 ).send( 'Untrusted Request Detected' );
 		return true;
