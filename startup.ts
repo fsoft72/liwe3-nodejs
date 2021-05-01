@@ -145,6 +145,11 @@ const _express_trace = ( app: ILApplication, cfg: ILiweConfig ) => {
 };
 
 const _defender = ( app: ILApplication, cfg: ILiweConfig ) => {
+	if ( !cfg.security.defender ) {
+		console.warn( "*** WARNING: defender section not defined in cfg.security" );
+		return;
+	}
+
 	if ( !cfg.security.defender.enabled ) {
 		console.warn( "WARNING: Defender disabled" );
 		return;
@@ -161,6 +166,11 @@ const _defender = ( app: ILApplication, cfg: ILiweConfig ) => {
 };
 
 const _throttler = ( app: ILApplication, cfg: ILiweConfig ) => {
+	if ( !cfg.security.throttler ) {
+		console.warn( "*** WARNING: throttler section not defined in cfg.security" );
+		return;
+	}
+
 	if ( !cfg.security.throttler.enabled ) {
 		console.warn( "WARNING: Throttler disabled" );
 		return;
