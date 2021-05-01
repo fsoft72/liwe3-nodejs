@@ -519,3 +519,11 @@ export const int = ( s: any ): number => {
 export const float = ( s: any ): number => {
 	return parseFloat( s.toString() );
 };
+
+export const keys_remove = ( obj: any, keys: string[] ) => {
+	if ( !obj ) return;
+
+	keys.map( ( k ) => {
+		delete obj[ k ];
+	} );
+};
