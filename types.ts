@@ -143,6 +143,7 @@ export interface ILiweConfig {
 		};
 
 		throttler: {
+			/** Flag T/F to enable / disable throttler */
 			enabled: boolean;
 			/** Number of request before throttling */
 			request_count: number;
