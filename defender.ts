@@ -11,7 +11,17 @@ const real_ip = ( ipAddr: string ) => {
 };
 
 export const get_real_ip = ( request: ILRequest ): string => {
-	return real_ip( ( request.headers[ 'x-forwarded-for' ] ? request.headers[ 'x-forwarded-for' ][ 0 ] : null ) || request.socket.remoteAddress );
+	let xff = request.headers[ 'x-forwarded-for' ];
+
+	if ( xff ) {
+		if ( xff.toString().indexOf( '[' ) != -1 ) {
+			xff = xff[ 0 ];
+		} else {
+			xff = xff.toString();
+		}
+	}
+
+	return real_ip( xff ? xff as string : request.socket.remoteAddress );
 };
 
 interface DefenderSettings {
