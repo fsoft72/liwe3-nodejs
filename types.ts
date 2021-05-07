@@ -152,6 +152,11 @@ export interface ILiweConfig {
 			/** Throttle time in millis */
 			wait_time: number;
 		};
+
+		session: {
+			/** Flag T/F. It T, the session is IP bounded */
+			bind_ip: boolean;
+		};
 	};
 
 	database: {
