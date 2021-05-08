@@ -156,6 +156,8 @@ export interface ILiweConfig {
 		session: {
 			/** Flag T/F. It T, the session is IP bounded */
 			bind_ip: boolean;
+			/** If True, only a session per user login at a time is available */
+			single: boolean;
 		};
 	};
 
