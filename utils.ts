@@ -227,16 +227,23 @@ export const unique_code = ( simple: boolean = true ): string => {
  * @param iterations: the number of iterations for the random string
  * @returns the created random string
  */
-export const random_string = ( length: number = 4, iterations: number = 20 ): string => {
+export const random_string = ( length: number = 4, iterations: number = 20, numeric: boolean = false ): string => {
 	const res: string[] = [];
+	const FROM = numeric ? 48 : 41;
+	const TO = numeric ? 57 : 122;
+
+	if ( length > iterations )
+		iterations = length + 1;
 
 	while ( res.length < iterations ) {
-		res.push( String.fromCharCode( rand_int( 41, 80 ) ) );
+		res.push( String.fromCharCode( rand_int( FROM, TO ) ) );
 	}
 
-	const s = md5( res.join( '' ) );
+	if ( numeric )
+		return res.join( '' ).slice( -length );
 
-	return s.slice( - length );
+	return sha512( res.join( '' ) ).slice( -length );
+
 };
 
 /**
