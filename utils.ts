@@ -516,6 +516,7 @@ export const date_format = ( date: any, format = 'yyyy-mm-dd HH:MM:SS' ): string
 };
 
 export const isValidEmail = ( email: string ): boolean => {
+	if ( !email || !email.length ) return false;
 	return !!email.match( /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ );
 };
 
