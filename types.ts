@@ -108,6 +108,9 @@ export interface ILiweConfig {
 
 		/** If T, user code (for registration and similar) are sent with the call */
 		send_code: boolean;
+
+		/** If T, query are dumped on console */
+		query_dump: boolean;
 	};
 
 	server: {
