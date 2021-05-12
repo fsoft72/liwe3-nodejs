@@ -1,5 +1,8 @@
-import { ILRequest, ILResponse } from './types';
+import { config_load } from './liwe';
+import { ILiweConfig, ILRequest, ILResponse } from './types';
 import { send_error } from './utils';
+
+const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
 interface IUser {
 	perms: any;
