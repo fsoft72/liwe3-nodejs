@@ -12,8 +12,10 @@ interface IUser {
 export const perm_available = ( user: IUser, perms: string[] ): boolean => {
 	if ( !user ) return false;
 
-	console.log( "REQUIRED: ", perms );
-	console.log( "USER %s PERMS: %o", user.email, user.perms );
+	if ( cfg.debug?.auth_dump ) {
+		console.log( "REQUIRED: ", perms );
+		console.log( "USER %s PERMS: %o", user.email, user.perms );
+	}
 
 	// Special permissions: is-logged means the user has is own uid
 	if ( perms.indexOf( "is-logged" ) !== -1 ) return true;
@@ -34,14 +36,17 @@ export const perm_available = ( user: IUser, perms: string[] ): boolean => {
 		authorized = ( mod.indexOf( spl[ 1 ] ) > -1 );
 	} );
 
-	console.log( "AUTHORIZED: ", authorized );
+	if ( cfg.debug?.auth_dump )
+		console.log( "AUTHORIZED: ", authorized );
 
 	return authorized;
 };
 
 export const perms = ( perms: string[] ) => {
 	return ( req: ILRequest, res: ILResponse, next: any ) => {
-		console.log( "REQUESTED PERMS: ", perms );
+		if ( cfg.debug?.auth_dump )
+			console.log( "REQUESTED PERMS: ", perms );
+
 		if ( !req.cfg?.security.check_permissions ) return next();
 
 		if ( !req.user || !perm_available( req.user, perms ) )
