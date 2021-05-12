@@ -1,6 +1,11 @@
 import { Database } from "arangojs";
 import { DocumentCollection } from "arangojs/collection";
-// import { ILiweConfig } from "./types";
+
+import { config_load } from "./liwe";
+import { ILiweConfig } from "./types";
+
+const cfg: ILiweConfig = config_load( 'data', {}, true, true );
+
 export interface DBCollectionIndex {
 	type: "hash" | "persistent" | "skiplist" | "ttl" | "geo" | "fulltext";
 	name?: string;
@@ -35,7 +40,7 @@ export const database_drop = async ( adb: Database, name: string ): Promise<bool
 		await adb.dropDatabase( name );
 		res = true;
 	} catch ( e ) {
-		console.log( "ERROR: ", e );
+		console.error( "ERROR: ", e );
 		// throw ( e );
 	}
 
@@ -100,7 +105,7 @@ export const collection_add_all = async ( coll: DocumentCollection, data: any ):
 };
 
 export const collection_find_all = async ( db: Database, query: string, params: any = undefined ): Promise<any> => {
-	console.log( "AQL query: ", query, params );
+	if ( cfg.debug?.query_dump ) console.log( "AQL query: ", query, params );
 	const data: any = await db.query( query, params ); //, { count: true } );
 
 	return await data.all();
