@@ -188,9 +188,14 @@ export interface ILiweConfig {
 		failure: string;
 	};
 
+	aws: {
+		region: string;
+	};
+
 	smtp: {
 		protocol: string;
 		server: string;
+		port: number;
 		login: string;
 		password: string;
 		dump_on_console: boolean;

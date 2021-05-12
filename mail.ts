@@ -1,10 +1,14 @@
 import * as fs from 'fs';
 
 import { fsname, config_load } from './liwe';
-import { LCback } from './types';
+import { ILiweConfig, LCback } from './types';
 import { template_render } from './utils';
 
-const cfg = config_load( 'data', {}, true, true );
+import * as AWS from 'aws-sdk';
+
+
+const cfg: ILiweConfig = config_load( 'data', {}, true, true );
+
 
 /**
  * sends an email using settings from `cfg.smtp`
@@ -16,17 +20,31 @@ const cfg = config_load( 'data', {}, true, true );
  * @param from sender email
  * @param cback the cback to be called
  */
-export const send_mail = ( subject: string, text: string, html: string, to: string, from: string, cback: LCback ) => {
-	const { protocol, login, password, server, send_for_real, dump_on_console } = cfg.smtp;
+export const send_mail = async ( subject: string, text: string, html: string, to: string, from: string, cback: LCback ) => {
+	const { protocol, login, password, server, send_for_real, dump_on_console, port } = cfg.smtp;
 
 	if ( !from ) from = login;
 
+
+
+	const nodemailer = require( 'nodemailer' );
+	// Specify the fields in the email.
 	const mailOptions = {
-		from,
+		from: from,
 		to,
 		subject,
+		// cc: ccAddresses,
+		// bcc: bccAddresses,
+		text,
 		html,
-		text
+		// Custom headers for configuration set and message tags.
+		/*
+		headers: {
+		  'X-SES-CONFIGURATION-SET': configurationSet,
+		  'X-SES-MESSAGE-TAGS': tag0,
+		  'X-SES-MESSAGE-TAGS': tag1
+		}
+		*/
 	};
 
 	if ( dump_on_console )
@@ -34,12 +52,23 @@ export const send_mail = ( subject: string, text: string, html: string, to: stri
 
 	if ( !send_for_real ) return cback( null, {} );
 
-	const nodemailer = require( 'nodemailer' );
-	const url = `${ protocol }://${ login }:${ password }@${ server }`;
-	const transporter = nodemailer.createTransport( url );
+	const transporter = nodemailer.createTransport( {
+		// Create the SMTP transport.
+		host: server,
+		port: port,
+		secure: false, // true for 465, false for other ports
+		auth: {
+			user: login,
+			pass: password
+		}
+	} );
 
-	return transporter.sendMail( mailOptions, cback );
+	// Send the email.
+	let info = await transporter.sendMail( mailOptions );
+
+	console.log( "Message sent! Message ID: ", info.messageId );
 };
+
 
 /**
  * sends an email using the `template` provided
