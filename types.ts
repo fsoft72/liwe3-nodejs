@@ -191,10 +191,6 @@ export interface ILiweConfig {
 		failure: string;
 	};
 
-	aws: {
-		region: string;
-	};
-
 	smtp: {
 		protocol: string;
 		server: string;
