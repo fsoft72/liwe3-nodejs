@@ -63,7 +63,7 @@ export const send_mail = async ( subject: string, text: string, html: string, to
 	// Send the email.
 	let info = await transporter.sendMail( mailOptions );
 
-	console.log( "Message sent! Message ID: ", info.messageId );
+	// console.log( "Message sent! Message ID: ", info.messageId );
 };
 
 
