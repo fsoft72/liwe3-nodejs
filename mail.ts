@@ -4,9 +4,6 @@ import { fsname, config_load } from './liwe';
 import { ILiweConfig, LCback } from './types';
 import { template_render } from './utils';
 
-import * as AWS from 'aws-sdk';
-
-
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
 
