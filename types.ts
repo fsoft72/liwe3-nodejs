@@ -111,6 +111,9 @@ export interface ILiweConfig {
 
 		/** If T, query are dumped on console */
 		query_dump: boolean;
+
+		/** If T, auth perms are dumped on console */
+		auth_dump: boolean;
 	};
 
 	server: {
