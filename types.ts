@@ -100,8 +100,22 @@ export interface ILiweConfig {
 	app: {
 		name: string;
 		default_language: string;
-		debug: boolean;
 	};
+
+	debug: {
+		/** If T, debug is enabled */
+		enabled: boolean;
+
+		/** If T, user code (for registration and similar) are sent with the call */
+		send_code: boolean;
+
+		/** If T, query are dumped on console */
+		query_dump: boolean;
+
+		/** If T, auth perms are dumped on console */
+		auth_dump: boolean;
+	};
+
 	server: {
 		port: number;
 		url: string;
@@ -183,10 +197,12 @@ export interface ILiweConfig {
 	smtp: {
 		protocol: string;
 		server: string;
+		port: number;
 		login: string;
 		password: string;
 		dump_on_console: boolean;
 		send_for_real: boolean;
+		from: string;
 	};
 
 	user: {
