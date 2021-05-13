@@ -44,7 +44,7 @@ export const sha512 = ( txt: string, do_check: boolean = true ) => {
  * @param error_code the numeric error code
  *
  */
-export const send_error = ( res: express.Response, error: any, error_code: number = 401 ) => {
+export const send_error = ( res: express.Response, error: any, error_code: number = 400 ) => {
 	if ( res.headersSent ) return;
 
 	if ( !error ) error = {};
