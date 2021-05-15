@@ -131,6 +131,20 @@ export const collection_find_by_id = async ( coll: DocumentCollection, id: strin
 	}
 };
 
+/**
+ * In `query` just put 'FOR ... IN ....' and FILTERs  (no RETURN)
+ */
+export const collection_count = async ( db: Database, query: string, params: any = undefined ): Promise<number> => {
+	return new Promise( async ( resolve, reject ) => {
+		query = `${ query } COLLECT WITH COUNT INTO length  RETURN length`;
+		const res = await collection_find_one( db, query, params );
+
+		if ( res === null ) return resolve( 0 );
+
+		return resolve( res );
+	} );
+};
+
 export const collection_init = async ( db: Database, name: string, idx: DBCollectionIndex[] = null, force: boolean = false ) => {
 	const coll = await collection_create( db, name, force );
 
