@@ -157,6 +157,9 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
 	return coll;
 };
 
+/**
+ * Returns [filters, values]
+ */
 export const prepare_filters = ( prefix: string, data: any ) => {
 	const values: any = {};
 	const filters: string[] = [];
