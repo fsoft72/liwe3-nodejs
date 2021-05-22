@@ -198,8 +198,8 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 	_cors( liwe.app, liwe.cfg );
 
 	// This line parses JSON requests
-	liwe.app.use( express.json( { limit: liwe.cfg.server.max_post_size } ) );
-	liwe.app.use( express.urlencoded( { extended: true } ) );
+	liwe.app.use( express.json( { limit: '25mb' } ) );   // liwe.cfg.server.max_post_size } ) );
+	liwe.app.use( express.urlencoded( { extended: true, limit: '25mb' } ) );
 	_express_trace( liwe.app, liwe.cfg );
 	// curl( app, cfg );
 	// restest( app, cfg );
