@@ -166,6 +166,7 @@ export const prepare_filters = ( prefix: string, data: any ) => {
 
 	Object.keys( data ).forEach( ( k ) => {
 		if ( typeof ( data[ k ] ) == 'undefined' ) return;
+		if ( data[ k ] === null ) return;
 
 		values[ k ] = data[ k ];
 		filters.push( `FILTER ${ prefix }.${ k } == @${ k }` );
