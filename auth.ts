@@ -30,7 +30,6 @@ export const perm_available = ( user: IUser, perms: string[] ): boolean => {
 		// we need just one permission to authorize
 		if ( authorized ) return;
 
-
 		const spl = p.split( "." );
 		const mod = user.perms[ spl[ 0 ] ] || [];
 
