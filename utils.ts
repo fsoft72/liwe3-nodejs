@@ -351,18 +351,21 @@ export interface IFieldDescr {
 }
 
 export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
-	const res: any = {};
+	const res: any = { ___errors: [] };
 
 	fields_descr.map( ( field ) => {
 		let v = dct[ field.name ];
 		const type = field.type.toLowerCase();
 
-		if ( v === undefined || v === null ) v = field.default;
+		if ( v === undefined || v === null )
+			v = field.default;
 
-		if ( v === undefined && field.required )
+		if ( v === undefined && field.required ) {
+			res.___errors.push( field.name );
 			console.error( "ERROR: missing field: ", field.name );
+		}
 
-		if ( v !== undefined )
+		if ( v !== undefined ) {
 			switch ( type ) {
 				case "string":
 					v = v.toString();
@@ -379,13 +382,14 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 					v = v.toString();
 					if ( v === "true" || v === "True" || v === "1" )
 						v = true;
-					else
+					else if ( v === 'false' || v === 'False' || v === '0' )
 						v = false;
 					break;
 				case "date":
 					v = new Date( v );
 					break;
 			}
+		}
 
 		res[ field.name ] = v;
 	} );
