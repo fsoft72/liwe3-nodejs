@@ -445,6 +445,11 @@ export const float = ( s: any ): number => {
 	return parseFloat( s.toString() );
 };
 
+/**
+ * remove keys specified by `keys` in `obj`
+ * This is a 'change in place' function.
+ * The object is modified in memory
+ */
 export const keys_remove = ( obj: any, keys: string[] ) => {
 	if ( !obj ) return;
 
