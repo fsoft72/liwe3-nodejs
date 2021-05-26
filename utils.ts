@@ -367,16 +367,21 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 
 		if ( v !== undefined ) {
 			switch ( type ) {
+				case "str":
 				case "string":
 					v = v.toString();
 					break;
+
+				case "int":
 				case "integer":
 					v = int( v );
 					break;
+
 				case "float":
 				case "number":
 					v = float( v );
 					break;
+
 				case "bool":
 				case "boolean":
 					v = v.toString();
@@ -385,6 +390,7 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 					else if ( v === 'false' || v === 'False' || v === '0' )
 						v = false;
 					break;
+
 				case "date":
 					v = new Date( v );
 					break;
