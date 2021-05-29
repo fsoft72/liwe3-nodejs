@@ -27,9 +27,9 @@ export const colors = {
 };
 
 export const warn = ( ...args: any ) => {
-	console.warn( colors.Yellow + "*** WARN:" + colors.Reset, ...args );
+	console.warn( colors.Magenta + colors.bg_Yellow + "  WARN  " + colors.Reset, ...args );
 };
 
 export const info = ( ...args: any ) => {
-	console.log( colors.White + colors.bg_Blue + "INFO:" + colors.Reset, ...args );
+	console.log( colors.White + colors.bg_Blue + "  INFO  " + colors.Reset, ...args );
 };;
