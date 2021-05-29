@@ -29,3 +29,7 @@ export const colors = {
 export const warn = ( ...args: any ) => {
 	console.warn( colors.Yellow + "*** WARN:" + colors.Reset, ...args );
 };
+
+export const info = ( ...args: any ) => {
+	console.log( colors.White + colors.bg_Blue + "INFO:" + colors.Reset, ...args );
+};;

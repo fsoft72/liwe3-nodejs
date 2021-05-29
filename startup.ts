@@ -7,7 +7,7 @@ import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfi
 import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, module_fullpath, config_load } from './liwe';
 import Defender, { applySettings } from './defender';
 import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
-import { colors, warn } from './console_colors';
+import { info, warn } from './console_colors';
 
 // import { SocketIORouter } from './socketio';
 
