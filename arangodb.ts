@@ -160,16 +160,32 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
 /**
  * Returns [filters, values]
  */
-export const prepare_filters = ( prefix: string, data: any ) => {
-	const values: any = {};
+export const prepare_filters = ( prefix: string, data: any, extra_values?: any ) => {
+	if ( !extra_values ) extra_values = {};
+
+	const values: any = { ...extra_values };
 	const filters: string[] = [];
 
-	Object.keys( data ).forEach( ( k ) => {
+	Object.keys( data ).forEach( ( k: string ) => {
+		let name;
+		let mode = '==';
+		let val;
+
 		if ( typeof ( data[ k ] ) == 'undefined' ) return;
 		if ( data[ k ] === null ) return;
 
-		values[ k ] = data[ k ];
-		filters.push( `FILTER ${ prefix }.${ k } == @${ k }` );
+		val = data[ k ];
+
+		if ( typeof ( val ) == 'object' ) {
+			mode = val.mode;
+			name = val.name;
+			val = val.val;
+		} else {
+			name = k;
+		}
+
+		values[ k ] = val;
+		filters.push( `FILTER ${ prefix }.${ name } ${ mode } @${ k }` );
 	} );
 
 	return [ filters.join( ' ' ), values ];
