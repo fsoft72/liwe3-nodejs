@@ -7,6 +7,8 @@ import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfi
 import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, module_fullpath, config_load } from './liwe';
 import Defender, { applySettings } from './defender';
 import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
+import { colors, warn } from './console_colors';
+
 // import { SocketIORouter } from './socketio';
 
 /** @ignore */
@@ -146,12 +148,12 @@ const _express_trace = ( app: ILApplication, cfg: ILiweConfig ) => {
 
 const _defender = ( app: ILApplication, cfg: ILiweConfig ) => {
 	if ( !cfg.security.defender ) {
-		console.warn( "*** WARNING: defender section not defined in cfg.security" );
+		warn( "defender section not defined in cfg.security" );
 		return;
 	}
 
 	if ( !cfg.security.defender.enabled ) {
-		console.warn( "WARNING: Defender disabled" );
+		warn( "Defender disabled" );
 		return;
 	}
 
@@ -167,12 +169,12 @@ const _defender = ( app: ILApplication, cfg: ILiweConfig ) => {
 
 const _throttler = ( app: ILApplication, cfg: ILiweConfig ) => {
 	if ( !cfg.security.throttler ) {
-		console.warn( "*** WARNING: throttler section not defined in cfg.security" );
+		warn( "Throttler section not defined in cfg.security" );
 		return;
 	}
 
 	if ( !cfg.security.throttler.enabled ) {
-		console.warn( "WARNING: Throttler disabled" );
+		warn( "Throttler disabled" );
 		return;
 	}
 
