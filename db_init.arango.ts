@@ -4,6 +4,7 @@
 import { arango_init, database_create, database_drop } from './arangodb';
 import { Database } from 'arangojs';
 import { ILiweConfig } from './types';
+import { critical } from './console_colors';
 
 export const db_init = async ( cfg: ILiweConfig ): Promise<Database> => {
 	let DB_NAME = cfg.database.dbname;
@@ -16,7 +17,7 @@ export const db_init = async ( cfg: ILiweConfig ): Promise<Database> => {
 		DB_NAME = DB_NAME + "_TEST";
 
 	if ( process.env.EMPTY_DB ) {
-		console.warn( "DROPPING DB: ", DB_NAME );
+		critical( "DROPPING DB: ", DB_NAME );
 		await database_drop( adb, DB_NAME );
 	}
 
