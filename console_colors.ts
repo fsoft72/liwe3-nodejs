@@ -56,4 +56,8 @@ export const warn = ( ...args: any ) => {
 
 export const info = ( ...args: any ) => {
 	console.log( colors.White + colors.bg_Blue + "  INFO  " + colors.Reset, ...args );
-};;
+};
+
+export const critical = ( ...args: any ) => {
+	console.error( colors.White + colors.bg_Red, ...args, colors.Reset );
+};
