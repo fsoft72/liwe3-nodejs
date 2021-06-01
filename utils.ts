@@ -457,3 +457,12 @@ export const keys_remove = ( obj: any, keys: string[] ) => {
 		delete obj[ k ];
 	} );
 };
+
+/**
+ * sets an attribute to `obj` only if `val` is not undefined.
+ */
+export const set_attr = ( obj: any, field_name: string, val: any ) => {
+	if ( val === undefined ) return;
+
+	obj[ field_name ] = val;
+};
