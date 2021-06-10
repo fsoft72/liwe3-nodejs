@@ -16,7 +16,7 @@ export const db_init = async ( cfg: ILiweConfig ): Promise<Database> => {
 	if ( process.env.TEST_DB === "1" )
 		DB_NAME = DB_NAME + "_TEST";
 
-	if ( process.env.EMPTY_DB ) {
+	if ( process.env.EMPTY_DB === "1" ) {
 		critical( "DROPPING DB: ", DB_NAME );
 		await database_drop( adb, DB_NAME );
 	}
