@@ -3,6 +3,7 @@ import { DocumentCollection } from "arangojs/collection";
 
 import { config_load } from "./liwe";
 import { ILiweConfig } from "./types";
+import { unique_code } from "./utils";
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
@@ -189,6 +190,10 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 	} );
 
 	return [ filters.join( ' ' ), values ];
+};
+
+export const mkid = ( prefix: string ) => {
+	return unique_code( false, prefix );
 };
 
 /*
