@@ -112,7 +112,7 @@ export const rand_int = ( min: number = 0, max: number = 100 ): number => {
 };
 
 /**
- * Generates an unique string code (36 chars long)
+ * Generates an unique string code (up to 37 chars long)
  *
  * @returns the unique string generated
  */
@@ -120,11 +120,11 @@ export const unique_code = ( simple: boolean = true ): string => {
 	const now = new Date();
 	const n = now.getTime() + now.getMilliseconds();
 
-	const c = ( rand_int( 0, n ) + n ).toString( 36 );
+	const c = `${ ( rand_int( 0, n ) + n ).toString( 36 ) }.${ rand_int( 0, n ).toString( 36 ).slice( 0, 4 ) }`;
 
 	if ( simple ) return c;
 
-	return md5( c );
+	return `${ md5( c ) }.${ rand_int( 0, n ).toString( 36 ).slice( 0, 4 ) }`;
 };
 
 /**
