@@ -132,6 +132,7 @@ export const _retrive_all_mods = () => {
 	const res: string[] = [];
 
 	fs.readdir( basepath ).forEach( ( p ) => {
+		if ( p.startsWith( '_' ) ) return;
 		if ( fs.stat( path.join( basepath, p ) ).isDirectory() ) res.push( p );
 	} );
 
