@@ -47,8 +47,10 @@ export const perm_available = ( user: IUser, perms: string[] ): boolean => {
 
 export const perms = ( perms: string[] ) => {
 	return ( req: ILRequest, res: ILResponse, next: any ) => {
-		if ( cfg.debug?.auth_dump )
+		if ( cfg.debug?.auth_dump ) {
 			console.log( "REQUESTED PERMS: ", perms );
+			console.log( "REQ USER: ", req.user );
+		}
 
 		if ( !req.cfg?.security.check_permissions ) return next();
 
