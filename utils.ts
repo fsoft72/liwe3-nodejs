@@ -469,19 +469,11 @@ export const set_attr = ( obj: any, field_name: string, val: any ) => {
 	obj[ field_name ] = val;
 };
 
-export const keys_filter = ( obj: any, type_def: any ): any => {
+export const keys_filter = ( obj: any, type_def: any ) => {
 	if ( !obj ) return;
 
-	const keys: any = {};
-
-	type_def.forEach( ( el: any ) => {
-		keys[ el.name ] = 1;
-	} );
-
-	console.log( "VALID KEYS: ", keys );
-
 	Object.keys( obj ).forEach( ( k ) => {
-		if ( keys[ k ] !== 1 )
-			delete obj[ k ];
+		const el = type_def[ k ];
+		if ( !el || el.priv === true ) delete obj[ k ];
 	} );
 };
