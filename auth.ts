@@ -9,6 +9,12 @@ interface IUser {
 	email: string;
 }
 
+/**
+ *  Verifies if the provided `user` has one of the perms specified by the `perms` string array.
+ *
+ * @param user   - The user
+ * @param perms  - A string[] of perms
+ */
 export const perm_available = ( user: IUser, perms: string[] ): boolean => {
 	if ( !user ) return false;
 
