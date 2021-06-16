@@ -100,6 +100,12 @@ export interface ILiweConfig {
 	app: {
 		name: string;
 		default_language: string;
+
+		/** It T, the app returns domains in some points */
+		return_domains: boolean;
+
+		/** The default domain name */
+		domain: string;
 	};
 
 	debug: {
@@ -121,9 +127,6 @@ export interface ILiweConfig {
 		url: string;
 		public_url: string;
 		public_name: string;
-		use_domains: boolean;
-		return_domains: boolean;
-		domain: string;
 		public_dir: string;
 		max_post_size: number;
 		dump_ip: boolean;
