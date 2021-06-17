@@ -477,3 +477,15 @@ export const keys_filter = ( obj: any, type_def: any ) => {
 		if ( !el || el.priv === true ) delete obj[ k ];
 	} );
 };
+
+/**
+ * Returns a date in international format 'YYYY-MM-DD'
+ */
+export const get_date = ( d: Date ): string => {
+	let year = d.getFullYear();
+	let month: any = d.getMonth() + 1;
+	let day = d.getDate();
+
+	if ( month < 10 ) month = `0${ month }`;
+	return `${ year }-${ month }-${ day }`;
+};
