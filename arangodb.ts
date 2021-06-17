@@ -177,7 +177,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 
 		val = data[ k ];
 
-		if ( typeof ( val ) == 'object' ) {
+		if ( typeof ( val ) == 'object' && val.val ) {
 			mode = val.mode;
 			name = val.name;
 			val = val.val;
@@ -196,35 +196,23 @@ export const mkid = ( prefix: string ) => {
 	return unique_code( false, prefix );
 };
 
-/*
-const user_init_db = async ( db: Database ) => {
-	const coll = collection_init( db, "users", [
-		{ type: "persistent", fields: [ "email" ], unique: true }
-	], true );
+export const collection_find_all_dict = async ( db: Database, coll_name: string, data: any ) => {
+	const [ filters, values ] = prepare_filters( 'o', data );
 
-	return coll;
+	return await collection_find_all( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values );
 };
 
-async function test () {
-	const adb = await arango_init( null );
-	const db = await database_create( adb, "fabio" );
+export const collection_find_one_dict = async ( db: Database, coll_name: string, data: any ) => {
+	const [ filters, values ] = prepare_filters( 'o', data );
 
-	const users = await user_init_db( db );
+	return await collection_find_one( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values );
+};
 
-	console.log( "INDEX: ", await users.indexes() );
+export const collection_del_one_dict = async ( db: Database, coll_name: string, data: any ) => {
+	const r = await collection_find_one_dict( db, coll_name, data );
+	if ( !r ) return;
+	const coll: DocumentCollection = db.collection( coll_name );
+	if ( !coll ) return;
 
-	let user = { "email": "mario.rossi@gmail.com", "password": "ciao123", "enabled": true, "created": Date() };
-
-	const res = await collection_add( users, user );
-	user = { ...user, ...res };
-	await collection_add( users, user );
-
-	const usrs = await collection_find_all( db, 'FOR user IN users RETURN user' );
-
-	console.log( "--- USERS: ", usrs );
-
-	database_drop( adb, 'fabio' );
-}
-*/
-
-// test();
+	await coll.remove( r._id );
+};
