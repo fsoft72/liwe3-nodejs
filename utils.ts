@@ -114,15 +114,25 @@ export const rand_int = ( min: number = 0, max: number = 100 ): number => {
 /**
  * Generates an unique string code (up to 37 chars long)
  *
+ * @param simple	If the code should be simpler (smaller)
+ * @param prefix	The prefix to add to the string
+ * @param second_slice	If a second slice of random string should be added
  * @returns the unique string generated
  */
-export const unique_code = ( simple: boolean = true, prefix: string = null ): string => {
+export const unique_code = ( simple: boolean = true, prefix: string = null, second_slice: boolean = true ): string => {
 	const now = new Date();
-	const n = now.getTime() + now.getMilliseconds();
+	const n = now.getTime(); //  + now.getMilliseconds();
 
-	if ( prefix ) prefix = `${ prefix }.`;
+	if ( prefix )
+		prefix = `${ prefix }.`;
+	else
+		prefix = '';
 
-	const c = `${ prefix }${ n.toString( 36 ) }.${ rand_int( 0, n ).toString( 36 ).slice( 0, 4 ) }`;
+	let c = `${ prefix }${ n.toString( 36 ) }`;
+
+	if ( simple && !second_slice ) return c;
+
+	c = `${ c }.${ rand_int( 0, n ).toString( 36 ).slice( 0, 4 ) }`;
 
 	if ( simple ) return c;
 
