@@ -48,10 +48,10 @@ export const database_drop = async ( adb: Database, name: string ): Promise<bool
 	return res;
 };
 
-export const collection_create = async ( db: Database, name: string, force: boolean = false ): Promise<any> => {
+export const collection_create = async ( db: Database, name: string, drop: boolean = false ): Promise<any> => {
 	let coll;
 
-	if ( force ) {
+	if ( drop ) {
 		coll = await db.collection( name );
 		if ( coll ) {
 			try {
