@@ -159,15 +159,27 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
 };
 
 /**
+ * Create filters and pagination (if skip and rows are defined)
+ *
+ * If rows == -1, then all rows are returned
+ *
  * Returns [filters, values]
  */
 export const prepare_filters = ( prefix: string, data: any, extra_values?: any ) => {
 	if ( !extra_values ) extra_values = {};
 
+	const my_data = { ...data };
 	const values: any = { ...extra_values };
 	const filters: string[] = [];
+	const skip = my_data.skip || 0;
+	const rows = my_data.rows || -1;
 
-	Object.keys( data ).forEach( ( k: string ) => {
+	delete my_data.skip;
+	delete my_data.rows;
+
+	const limit = rows != -1 ? ` LIMIT ${ skip }, ${ rows }` : '';
+
+	Object.keys( my_data ).forEach( ( k: string ) => {
 		let name;
 		let mode = '==';
 		let val;
@@ -189,7 +201,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 		filters.push( `FILTER ${ prefix }.${ name } ${ mode } @${ k }` );
 	} );
 
-	return [ filters.join( ' ' ), values ];
+	return [ filters.join( ' ' ) + limit, values ];
 };
 
 export const mkid = ( prefix: string ) => {
