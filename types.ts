@@ -96,6 +96,11 @@ export interface ILiWEDefaultUser {
 	enabled?: boolean;
 }
 
+interface ILiWEStartupConf {
+	/** array of modules to bootstrap at the beginning */
+	modules: string[];
+}
+
 export interface ILiweConfig {
 	app: {
 		name: string;
@@ -106,6 +111,9 @@ export interface ILiweConfig {
 
 		/** The default domain name */
 		domain: string;
+
+		/** Configurations for the app startup */
+		startup: ILiWEStartupConf;
 	};
 
 	debug: {

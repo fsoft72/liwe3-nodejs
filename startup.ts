@@ -224,10 +224,14 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 
 	if ( !modules || !modules.length ) modules = _retrive_all_mods();
 
-	liwe.module_init( 'user' );
+	// bootstrap of main modules
+	const mods: string[] = liwe.cfg.app.startup?.modules || [];
+	mods.forEach( ( mod ) => liwe.module_init( mod ) );
 
+	// init of remaining modules
 	modules.forEach( ( m ) => {
-		if ( m !== 'user' ) liwe.module_init( m );
+		if ( mods.indexOf( m ) != -1 ) return;
+		liwe.module_init( m );
 	} );
 
 	console.log( '=========================\n\n' );
