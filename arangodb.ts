@@ -3,7 +3,7 @@ import { DocumentCollection } from "arangojs/collection";
 
 import { config_load } from "./liwe";
 import { ILiweConfig } from "./types";
-import { unique_code } from "./utils";
+import { keys_filter, unique_code } from "./utils";
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
@@ -77,8 +77,17 @@ export const collection_truncate = async ( db: Database, name: string ): Promise
 	return true;
 };
 
-export const collection_add = async ( coll: DocumentCollection, data: any, force_insert: boolean = false ): Promise<any> => {
+/**
+ * Adds / updates an element in the collection
+ *
+ * @param coll    	The collection to add the element to
+ * @param data    	Element data (key/val)
+ * @param force_insert 	Boolean, if T the element is forced to be inside the DB
+ * @param data_type	If present, element is filtered before returning
+ */
+export const collection_add = async ( coll: DocumentCollection, data: any, force_insert: boolean = false, data_type: any = undefined ): Promise<any> => {
 	let res: any;
+	let x: any;
 
 	data.updated = new Date();
 	if ( !force_insert && data._id ) {
@@ -88,8 +97,14 @@ export const collection_add = async ( coll: DocumentCollection, data: any, force
 		res = await coll.save( data, { returnNew: true } );
 	}
 
-	if ( res.new && res.new._key ) return res.new;
-	return res;
+	if ( res.new && res.new._key )
+		x = res.new;
+	else
+		x = res;
+
+	if ( data_type ) keys_filter( x, data_type );
+
+	return x;
 };
 
 export const collection_add_all = async ( coll: DocumentCollection, data: any ): Promise<any> => {
@@ -105,16 +120,35 @@ export const collection_add_all = async ( coll: DocumentCollection, data: any ):
 	return res;
 };
 
-export const collection_find_all = async ( db: Database, query: string, params: any = undefined ): Promise<any> => {
+/**
+ * returns a list of elements
+ *
+ * @param  db   - the database to query on
+ * @param  query  - the AQL query
+ * @param  params - a key/value pairs of params present in the query
+ * @param  data_type - if present, result list will be filtered before returning
+ */
+export const collection_find_all = async ( db: Database, query: string, params: any = undefined, data_type: any = undefined ): Promise<any> => {
 	if ( cfg.debug?.query_dump ) console.log( "AQL query: ", query, params );
 	const data: any = await db.query( query, params ); //, { count: true } );
+	const res: any[] = await data.all();
 
-	return await data.all();
+	if ( data_type ) res.forEach( ( el ) => keys_filter( el, data_type ) );
+
+	return res;
 };
 
-export const collection_find_one = async ( db: Database, query: string, params: any = undefined ): Promise<any> => {
+/**
+ * returns a single element
+ *
+ * @param  db   - the database to query on
+ * @param  query  - the AQL query
+ * @param  params - a key/value pairs of params present in the query
+ * @param  data_type - if present, result list will be filtered before returning
+ */
+export const collection_find_one = async ( db: Database, query: string, params: any = undefined, data_type: any = undefined ): Promise<any> => {
 	return new Promise( async ( resolve, reject ) => {
-		const res = await collection_find_all( db, query, params );
+		const res = await collection_find_all( db, query, params, data_type );
 
 		if ( !res || !res.length ) return resolve( null );
 
@@ -208,16 +242,32 @@ export const mkid = ( prefix: string ) => {
 	return unique_code( false, prefix );
 };
 
-export const collection_find_all_dict = async ( db: Database, coll_name: string, data: any ) => {
+/**
+ * returns a list of elements
+ *
+ * @param db          the database to query onto
+ * @param coll_name   the collection name
+ * @param data        the data to filter on (key/val)
+ * @param  data_type - if present, result list will be filtered before returning
+ */
+export const collection_find_all_dict = async ( db: Database, coll_name: string, data: any, data_type: any = undefined ) => {
 	const [ filters, values ] = prepare_filters( 'o', data );
 
-	return await collection_find_all( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values );
+	return await collection_find_all( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values, data_type );
 };
 
-export const collection_find_one_dict = async ( db: Database, coll_name: string, data: any ) => {
+/**
+ * returns a single element based on a dict
+ *
+ * @param db          the database to query onto
+ * @param coll_name   the collection name
+ * @param data        the data to filter on (key/val)
+ * @param  data_type - if present, result list will be filtered before returning
+ */
+export const collection_find_one_dict = async ( db: Database, coll_name: string, data: any, data_type: any = undefined ) => {
 	const [ filters, values ] = prepare_filters( 'o', data );
 
-	return await collection_find_one( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values );
+	return await collection_find_one( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values, data_type );
 };
 
 export const collection_del_one_dict = async ( db: Database, coll_name: string, data: any ) => {
