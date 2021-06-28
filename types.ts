@@ -1,6 +1,31 @@
 import * as express from 'express';
 // import { SocketIORouter } from './socketio';
 
+/** MiniUserDetails */
+export interface MiniUserDetails {
+	/** The user id */
+	id?: string;
+	/** The domain id the user belongs to */
+	id_domain?: string;
+	/** The user email */
+	email?: string;
+	/** The user first name */
+	name?: string;
+	/** The user last name */
+	lastname?: string;
+	/** All user permissions */
+	perms?: any;
+	/** The user level */
+	level?: number;
+	/** Extra items for user details (jsoninzed) */
+	extra?: any;
+	/** Tags added to the user */
+	tags?: string[];
+	/** The user avatar URL */
+	avatar?: string;
+}
+
+
 /** Options you can pass on a Server start */
 export interface LiWEServerOptions {
 	/** Use this option to FORCE server port number. By default, server port is defined by env.PORT or data.json */
@@ -16,7 +41,7 @@ export type LCback = ( err: any, arg1?: any ) => void;
 /** The enhanced Fastify Request with LiWE elements */
 export interface ILRequest extends express.Request {
 	/** The user structure, if the user is logged */
-	user?: any;
+	user?: MiniUserDetails;
 	/** The current language (for localization) */
 	language?: string;
 
