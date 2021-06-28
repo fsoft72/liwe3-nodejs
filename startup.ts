@@ -53,6 +53,9 @@ const _module_init = ( name: string, liwe: ILiWE ) => {
 		return;
 	}
 
+	const mi = require( `${ mod_dirname }/methods` ).middleware_init;
+	if ( mi ) mi( liwe );
+
 	require( `${ mod_dirname }/endpoints` ).init( liwe );
 };
 
