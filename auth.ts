@@ -1,13 +1,8 @@
 import { config_load } from './liwe';
-import { ILiweConfig, ILRequest, ILResponse } from './types';
+import { ILiweConfig, ILRequest, ILResponse, MiniUserDetails } from './types';
 import { send_error } from './utils';
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
-
-interface IUser {
-	perms: any;
-	email: string;
-}
 
 /**
  *  Verifies if the provided `user` has one of the perms specified by the `perms` string array.
@@ -15,7 +10,7 @@ interface IUser {
  * @param user   - The user
  * @param perms  - A string[] of perms
  */
-export const perm_available = ( user: IUser, perms: string[] ): boolean => {
+export const perm_available = ( user: MiniUserDetails, perms: string[] ): boolean => {
 	if ( !user ) return false;
 
 	if ( cfg.debug?.auth_dump ) {
