@@ -197,6 +197,16 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
  *
  * If rows == -1, then all rows are returned
  *
+ * This accepts two type of key/values
+ *
+ * - "just"  a key/value
+ * - a value that is an object with the following keys:
+ *     - val:    the value to match against
+ *     - mode:   the arango DB comparsion mode
+ *     - name:   the field name to match on
+ *
+ * NOTE: in 'mode' == 'multi' or 'm'  the inner search filter is used
+ *
  * Returns [filters, values]
  */
 export const prepare_filters = ( prefix: string, data: any, extra_values?: any ) => {
@@ -232,7 +242,13 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 		}
 
 		values[ k ] = val;
-		filters.push( `FILTER ${ prefix }.${ name } ${ mode } @${ k }` );
+
+		if ( mode == 'm' || mode == 'multi' ) {
+			// ' FILTER @tag IN user.tags ' : '';
+			filters.push( `FILTER @${ k } IN ${ prefix }.${ name }` );
+		} else {
+			filters.push( `FILTER ${ prefix }.${ name } ${ mode } @${ k }` );
+		}
 	} );
 
 	return [ filters.join( ' ' ) + limit, values ];
