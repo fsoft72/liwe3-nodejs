@@ -105,7 +105,7 @@ export const toBoolean = ( v: any ) => {
 
 export interface ILiWE {
 	app: ILApplication;
-	cfg: any;
+	cfg: ILiweConfig;
 	cwd: string;
 	app_name: string;
 	port: number;
