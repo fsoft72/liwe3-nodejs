@@ -499,3 +499,40 @@ export const get_date = ( d: Date ): string => {
 	if ( month < 10 ) month = `0${ month }`;
 	return `${ year }-${ month }-${ day }`;
 };
+
+/**
+ * adds a new element (el) to a string list (lst)
+ * only if `el` does not exists in `lst`
+ *
+ * @param lst	the string list to add the element to
+ * @param el	element to be added
+ *
+ * @returns the new modified list
+ */
+export const list_add = ( lst: string[], el: string ) => {
+	if ( !lst ) lst = [];
+
+	el = el.toLowerCase();
+	if ( lst.indexOf( el ) != -1 ) lst;
+
+	lst.push( el );
+
+	return lst;
+};
+
+/**
+ * removes an element (el) from the list (lst)
+ *
+ * @param lst	the string list to add the element to
+ * @param el	element to be added
+ *
+ * @returns  the new modified list
+ */
+export const list_del = ( lst: string[], el: string ) => {
+	if ( !lst ) return [];
+
+	el = el.toLowerCase();
+	lst = lst.filter( ( m ) => m != el );
+
+	return lst;
+};
