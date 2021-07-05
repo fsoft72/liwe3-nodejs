@@ -23,6 +23,9 @@ export interface MiniUserDetails {
 	tags?: string[];
 	/** The user avatar URL */
 	avatar?: string;
+
+	/** The unique session key */
+	session_key?: string;
 }
 
 
@@ -38,10 +41,22 @@ export interface LiWEServerOptions {
 /** The standard LiWE Callback for functions. */
 export type LCback = ( err: any, arg1?: any ) => void;
 
-/** The enhanced Fastify Request with LiWE elements */
+interface LiWESession {
+	id_domain?: string;
+	domain_code?: string;
+	data?: {
+		user?: MiniUserDetails;
+	};
+}
+
+/** The enhanced Request with LiWE elements */
 export interface ILRequest extends express.Request {
 	/** The user structure, if the user is logged */
 	user?: MiniUserDetails;
+
+	/** The full user session */
+	session?: LiWESession;
+
 	/** The current language (for localization) */
 	language?: string;
 
