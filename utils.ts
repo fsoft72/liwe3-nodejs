@@ -369,7 +369,7 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 		let v = dct[ field.name ];
 		const type = field.type.toLowerCase();
 
-		if ( v === undefined || v === null )
+		if ( v === undefined || v === null || v === 'null' )
 			v = field.default;
 
 		if ( v === undefined && field.required ) {
