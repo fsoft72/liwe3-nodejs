@@ -235,20 +235,25 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 
 		if ( typeof ( val ) == 'object' ) {
 			mode = val.mode;
-			name = val.name;
+			name = val.name || k;
 			val = val.val;
 		} else {
 			name = k;
 		}
 
-		if ( val !== undefined ) {
+		if ( val !== undefined || mode == 'null' ) {
 			values[ k ] = val;
 
-			if ( mode == 'm' || mode == 'multi' ) {
-				// ' FILTER @tag IN user.tags ' : '';
-				filters.push( `FILTER @${ k } IN ${ prefix }.${ name }` );
-			} else {
-				filters.push( `FILTER ${ prefix }.${ name } ${ mode } @${ k }` );
+			switch ( mode ) {
+				case 'm':
+				case 'multi':
+					filters.push( `FILTER @${ k } IN ${ prefix }.${ name }` );
+					break;
+				case 'null':
+					filters.push( `FILTER ${ prefix }.${ name } == null` );
+					break;
+				default:
+					filters.push( `FILTER ${ prefix }.${ name } ${ mode } @${ k }` );
 			}
 		}
 	} );
