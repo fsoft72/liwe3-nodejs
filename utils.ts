@@ -479,6 +479,19 @@ export const set_attr = ( obj: any, field_name: string, val: any ) => {
 	obj[ field_name ] = val;
 };
 
+/**
+ * sets multiple attributes to  `obj` only if `val` is not undefined.
+ */
+export const set_attrs = ( obj: any, data: any ) => {
+	Object.keys( obj ).forEach( ( k: string ) => {
+		const v = data[ k ];
+
+		if ( v === undefined ) return;
+
+		obj[ k ] = v;
+	} );
+};
+
 export const keys_filter = ( obj: any, type_def: any ) => {
 	if ( !obj ) return;
 
