@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as path from 'path';
 import * as express from 'express';
+import * as formidable from 'formidable';
 
 import * as fs from './fs';
 import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfig, LiWEServerOptions } from './types';
@@ -32,6 +33,31 @@ const _cors = ( app: ILApplication, cfg: ILiweConfig ) => {
 	};
 
 	app.use( cors( corsOptions ) );
+};
+
+const _formidable = ( app: ILApplication, cfg: ILiweConfig ) => {
+	const form = formidable( { multiples: true } );
+	app.use( ( req: ILRequest, res: ILResponse, next: ILNextFunction ) => {
+		const ctype = req.header( 'content-type' ) || '';
+
+		if ( ctype.indexOf( 'multipart' ) != -1 ) {
+			form.parse( req, ( err, fields, files ) => {
+				if ( err ) {
+					console.error( "ERROR parsing form: ", err );
+				}
+
+				req.fields = fields;
+				req.files = files;
+
+				next();
+			} );
+		} else {
+			req.fields = { ...req.body };
+			req.files = null;
+			next();
+		}
+	} );
+
 };
 
 /** @ignore */
@@ -206,7 +232,11 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 	// This line parses JSON requests
 	liwe.app.use( express.json( { limit: '25mb' } ) );   // liwe.cfg.server.max_post_size } ) );
 	liwe.app.use( express.urlencoded( { extended: true, limit: '25mb' } ) );
+
+	_formidable( liwe.app, liwe.cfg );
+
 	_express_trace( liwe.app, liwe.cfg );
+
 	// curl( app, cfg );
 	// restest( app, cfg );
 

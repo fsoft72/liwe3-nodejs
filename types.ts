@@ -75,6 +75,10 @@ export interface ILRequest extends express.Request {
 	/** The instance of the SocketIORouter (if enabled) */
 	// socketio?: SocketIORouter;
 
+	fields?: any;
+
+	files?: any;
+
 	logout: () => void;
 }
 
