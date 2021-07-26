@@ -9,6 +9,7 @@ import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, mod
 import Defender, { applySettings } from './defender';
 import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
 import { info, warn } from './console_colors';
+import { mkid } from './arangodb';
 
 // import { SocketIORouter } from './socketio';
 
@@ -36,7 +37,18 @@ const _cors = ( app: ILApplication, cfg: ILiweConfig ) => {
 };
 
 const _formidable = ( app: ILApplication, cfg: ILiweConfig ) => {
-	const form = formidable( { multiples: true } );
+	const form = formidable( {
+		multiples: true,
+		keepExtensions: true,
+		allowEmptyFiles: false,
+		maxFileSize: cfg.upload.max_upload_size * 1024 * 1024,
+	} );
+
+	form.on( 'fileBegin', function ( name, file ) {
+		file.path = temp_fullpath() + "/" + mkid( 'file' ) + "." + file.name.split( "." ).slice( -1 );
+	} );
+
+
 	app.use( ( req: ILRequest, res: ILResponse, next: ILNextFunction ) => {
 		const ctype = req.header( 'content-type' ) || '';
 
