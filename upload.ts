@@ -10,9 +10,11 @@ export const upload_move = ( req: ILRequest, field_name: string, dest_path: stri
 	mkdir( dest_path );
 
 	if ( !dest_fname ) dest_fname = mkid( 'file' ) + "." + finfo.ext;
+	const full_filename = dest_path + "/" + dest_fname;
+
 	move( finfo.path, dest_path + "/" + dest_fname );
 
-	return { path: dest_path, name: dest_fname };
+	return { path: dest_path, name: dest_fname, full_filename };
 };
 
 export const upload_info = ( req: ILRequest, field_name: string ) => {
