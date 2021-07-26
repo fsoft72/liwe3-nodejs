@@ -16,6 +16,8 @@ export const upload_move = ( req: ILRequest, field_name: string, dest_path: stri
 };
 
 export const upload_info = ( req: ILRequest, field_name: string ) => {
+	if ( !req.files ) return {};
+
 	const file: any = req.files[ field_name ];
 
 	if ( !file ) return {};
