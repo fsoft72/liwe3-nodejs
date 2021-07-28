@@ -8,7 +8,7 @@ export const fsname = ( path: string ): string => {
 
 export const config_fullpath = ( fname: string = '' ): string => fsname( `etc/config/${ fname }` );
 export const template_fullpath = ( modname: string, fname: string = '' ): string => fsname( `etc/templates/${ modname }/${ fname }` );
-export const upload_fullpath = ( subpath: string = '' ): string => fsname( `static/uploads/${ subpath }` );
+export const upload_fullpath = ( subpath: string = '' ): string => fsname( `static/public/uploads/${ subpath }` );
 export const public_fullpath = ( subpath: string = '' ): string => fsname( `static/public/${ subpath }` );
 export const temp_fullpath = ( subpath: string = '' ): string => fsname( `static/temp/${ subpath }` );
 export const server_fullpath = ( subpath: string = '' ): string => fsname( `dist/server/${ subpath }` );
@@ -21,6 +21,8 @@ export const relative_fullpath = ( fullpath: string = '' ): string => {
 
 	return fullpath.slice( fsn.length );
 };
+
+export const public_relative_path = ( full_path: string = '' ): string => full_path.split( "/static/public" ).slice( -1 )[ 0 ];
 
 export const config_load = ( fname: string = '', _default: any = {}, show_error: boolean = false, raise_exception: boolean = false, path: string = 'etc/config' ): any => {
 	let name = fsname( `${ path }/${ fname }.json` );
