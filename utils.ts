@@ -10,6 +10,26 @@ import * as jwt from 'jsonwebtoken';
 
 import { LCback, ILRequest, ILResponse } from './types';
 
+const synfetch = require( 'sync-fetch' );
+
+const recaptcha_check = ( captcha: string ) => {
+	const data = synfetch(
+		'https://hcaptcha.com/siteverify',
+		{
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+			},
+			body: `response=${ captcha }&secret=${ process.env.HCAPTCHA_SECRET_KEY }`,
+			method: "POST",
+		}
+	).json();
+
+	console.log( "==== RECAPTCHA: ", data );
+
+	return data;
+};
+
+
 /**
  * This function converts ``txt`` into an MD5 string.
  * If ``do_check`` is true, the original string is checked against a Regular Expression to
@@ -365,9 +385,10 @@ export interface IFieldDescr {
 export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 	const res: any = { ___errors: [] };
 
-	fields_descr.map( ( field ) => {
+	fields_descr.map( async ( field ) => {
 		let v = dct[ field.name ];
 		const type = field.type.toLowerCase();
+		let chk;
 
 		if ( v === undefined || v === null || v === 'null' || v === 'undefined' )
 			v = field.default;
@@ -405,6 +426,10 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 
 				case "date":
 					v = new Date( v );
+					break;
+
+				case "recaptcha":
+					chk = await recaptcha_check( v );
 					break;
 			}
 		}
