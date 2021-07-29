@@ -130,7 +130,7 @@ export const collection_add_all = async ( coll: DocumentCollection, data: any ):
  */
 export const collection_find_all = async ( db: Database, query: string, params: any = undefined, data_type: any = undefined ): Promise<any> => {
 	if ( cfg.debug?.query_dump ) console.log( "AQL query: ", query, params );
-	const data: any = await db.query( query, params ); //, { count: true } );
+	const data: any = await db.query( query, params );
 	const res: any[] = await data.all();
 
 	if ( data_type ) res.forEach( ( el ) => keys_filter( el, data_type ) );
@@ -272,11 +272,19 @@ export const mkid = ( prefix: string ) => {
  * @param coll_name   the collection name
  * @param data        the data to filter on (key/val)
  * @param  data_type - if present, result list will be filtered before returning
+ * @param rows		- How many rows to return (if 0, unlimited)
+ * @param skip		- Starting row / offset
  */
-export const collection_find_all_dict = async ( db: Database, coll_name: string, data: any, data_type: any = undefined ) => {
+export const collection_find_all_dict = async ( db: Database, coll_name: string, data: any, data_type: any = undefined, rows = 0, skip = 0 ) => {
 	const [ filters, values ] = prepare_filters( 'o', data );
+	let limit = '';
 
-	return await collection_find_all( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values, data_type );
+	if ( skip && !rows ) rows = 9999999;
+
+	if ( rows > 0 )
+		limit = `LIMIT ${ skip }, ${ rows }`;
+
+	return await collection_find_all( db, `FOR o IN ${ coll_name } ${ filters } ${ limit } RETURN o`, values, data_type );
 };
 
 /**
