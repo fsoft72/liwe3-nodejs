@@ -549,3 +549,21 @@ export const list_del = ( lst: string[], el: string ) => {
 
 	return lst;
 };
+
+/**
+ * returns a new object with only the keys that are not undefined
+ *
+ * @param dct	the object with keys that can be undefined
+ *
+ * @returns a new object with valid keys
+ */
+export const keys_valid = ( dct: any ) => {
+	const res: any = {};
+	Object.keys( dct ).forEach( ( k ) => {
+		if ( dct[ k ] === undefined ) return;
+
+		res[ k ] = dct[ k ];
+	} );
+
+	return res;
+};
