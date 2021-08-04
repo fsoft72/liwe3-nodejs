@@ -185,6 +185,9 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
 
 	if ( idx && idx.length ) {
 		await Promise.all( idx.map( ( p ) => {
+			const fields = p.fields.join( '_' ).replace( "[*]", "" );
+			p.name = `idx_${ name }_${ fields }`;
+			// console.log( "NAME: ", p.name );
 			coll.ensureIndex( p );
 		} ) );
 	}
