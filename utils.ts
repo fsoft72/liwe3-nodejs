@@ -1,32 +1,38 @@
 import { config_load } from './liwe';
 
-const cfg = config_load( 'data', {}, true, true );
-
 import * as fs from 'fs';
 import * as express from 'express';
 import * as HTTP from 'http';
 import * as HandleBars from 'handlebars';
 import * as jwt from 'jsonwebtoken';
 
-import { LCback, ILRequest, ILResponse } from './types';
+import { LCback, ILRequest, ILResponse, ILiweConfig } from './types';
 
-const synfetch = require( 'sync-fetch' );
+const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
-const recaptcha_check = ( captcha: string ) => {
-	const data = synfetch(
+import fetch from 'node-fetch';
+
+export const recaptcha_check = async ( captcha: string ) => {
+	const body = `response=${ captcha }&secret=${ cfg.user.recaptcha.secret }`;
+
+	console.log( "--- BODY: ", body );
+
+	const data = await fetch(
 		'https://hcaptcha.com/siteverify',
 		{
 			headers: {
 				"Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
 			},
-			body: `response=${ captcha }&secret=${ process.env.HCAPTCHA_SECRET_KEY }`,
+			body,
 			method: "POST",
 		}
-	).json();
+	);
 
-	console.log( "==== RECAPTCHA: ", data );
+	const json = await data.json();
 
-	return data;
+	console.log( "==== RECAPTCHA: ", json );
+
+	return json;
 };
 
 
