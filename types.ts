@@ -227,6 +227,7 @@ export interface ILiweConfig {
 			/** If True, only a session per user login at a time is available */
 			single: boolean;
 		};
+
 	};
 
 	database: {
@@ -275,6 +276,15 @@ export interface ILiweConfig {
 			enforce: boolean;
 			min_len: number;
 			secure: boolean;
+		};
+
+		/** The recaptcha section */
+		recaptcha: {
+			/** Flag T/F to check for recaptcha */
+			enabled: boolean;
+
+			/** The hCaptcha secret key */
+			secret: string;
 		};
 	};
 
