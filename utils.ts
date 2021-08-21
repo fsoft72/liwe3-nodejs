@@ -428,6 +428,8 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 						v = true;
 					else if ( v === 'false' || v === 'False' || v === '0' )
 						v = false;
+					else
+						v = undefined;
 					break;
 
 				case "date":
