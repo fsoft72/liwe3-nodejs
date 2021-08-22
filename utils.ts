@@ -383,7 +383,7 @@ export const template_render = ( template_full_path: string, dct: object ): stri
 
 export interface IFieldDescr {
 	name: string;
-	type: string;
+	type: string | object;
 	default?: any;
 	required?: boolean;
 }
@@ -393,8 +393,13 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 
 	fields_descr.map( async ( field ) => {
 		let v = dct[ field.name ];
-		const type = field.type.toLowerCase();
+		let type: any;
 		let chk;
+
+		if ( isObject( field.type ) )
+			type = field.type;
+		else
+			type = ( field.type as string ).toLowerCase();
 
 		if ( v === undefined || v === null || v === 'null' || v === 'undefined' )
 			v = field.default;
@@ -405,40 +410,50 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 		}
 
 		if ( v !== undefined ) {
-			switch ( type ) {
-				case "str":
-				case "string":
-					v = v.toString();
-					break;
+			if ( isObject( type ) ) {
+				v = v.toString();
+				const vals = Object.values( type );
 
-				case "int":
-				case "integer":
-					v = int( v );
-					break;
+				if ( vals.indexOf( v ) == -1 ) {
+					res.___errors.push( `Invalid value for '${ field.name }' [${ ( type as any ).__name }]: ${ v }` );
+					v = undefined;
+				}
+			} else {
+				switch ( type ) {
+					case "str":
+					case "string":
+						v = v.toString();
+						break;
 
-				case "float":
-				case "number":
-					v = float( v );
-					break;
+					case "int":
+					case "integer":
+						v = int( v );
+						break;
 
-				case "bool":
-				case "boolean":
-					v = v.toString();
-					if ( v === "true" || v === "True" || v === "1" )
-						v = true;
-					else if ( v === 'false' || v === 'False' || v === '0' )
-						v = false;
-					else
-						v = undefined;
-					break;
+					case "float":
+					case "number":
+						v = float( v );
+						break;
 
-				case "date":
-					v = new Date( v );
-					break;
+					case "bool":
+					case "boolean":
+						v = v.toString();
+						if ( v === "true" || v === "True" || v === "1" )
+							v = true;
+						else if ( v === 'false' || v === 'False' || v === '0' )
+							v = false;
+						else
+							v = undefined;
+						break;
 
-				case "recaptcha":
-					chk = await recaptcha_check( v );
-					break;
+					case "date":
+						v = new Date( v );
+						break;
+
+					case "recaptcha":
+						chk = await recaptcha_check( v );
+						break;
+				}
 			}
 		}
 
