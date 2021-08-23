@@ -268,6 +268,18 @@ export const mkid = ( prefix: string ) => {
 	return unique_code( false, prefix );
 };
 
+
+interface SortOptions {
+	field: string;
+	desc?: number;
+}
+
+interface CollectionFindAllOptions {
+	rows?: number;
+	skip?: number;
+	sort?: SortOptions[];
+}
+
 /**
  * returns a list of elements
  *
@@ -275,19 +287,31 @@ export const mkid = ( prefix: string ) => {
  * @param coll_name   the collection name
  * @param data        the data to filter on (key/val)
  * @param  data_type - if present, result list will be filtered before returning
- * @param rows		- How many rows to return (if 0, unlimited)
- * @param skip		- Starting row / offset
+ * @param options	- A `CollectionFindAllOptions` object
  */
-export const collection_find_all_dict = async ( db: Database, coll_name: string, data: any, data_type: any = undefined, rows = 0, skip = 0 ) => {
+export const collection_find_all_dict = async ( db: Database, coll_name: string, data: any, data_type: any = undefined, options?: CollectionFindAllOptions ) => {  //rows = 0, skip = 0 ) => {
 	const [ filters, values ] = prepare_filters( 'o', data );
 	let limit = '';
+	let { skip = 0, rows = 0 } = options || {};
+	const _sort: string[] = [];
+	let sort = "";
 
 	if ( skip && !rows ) rows = 9999999;
 
 	if ( rows > 0 )
 		limit = `LIMIT ${ skip }, ${ rows }`;
 
-	return await collection_find_all( db, `FOR o IN ${ coll_name } ${ filters } ${ limit } RETURN o`, values, data_type );
+	options?.sort && options.sort.forEach( ( opt: SortOptions ) => {
+		if ( opt.desc )
+			_sort.push( `o.${ opt.field } DESC` );
+		else
+			_sort.push( `o.${ opt.field }` );
+	} );
+
+	if ( _sort.length )
+		sort = `SORT ${ _sort.join( ', ' ) }`;
+
+	return await collection_find_all( db, `FOR o IN ${ coll_name } ${ filters } ${ sort } ${ limit } RETURN o`, values, data_type );
 };
 
 /**
