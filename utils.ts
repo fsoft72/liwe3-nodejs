@@ -498,6 +498,7 @@ export const isValidEmail = ( email: string ): boolean => {
 };
 
 export const int = ( s: any ): number => {
+	if ( typeof ( s ) === 'undefined' ) s = "0";
 	return parseInt( s.toString(), 10 );
 };
 
