@@ -97,14 +97,6 @@ const _module_init = ( name: string, liwe: ILiWE ) => {
 	require( `${ mod_dirname }/endpoints` ).init( liwe );
 };
 
-/*
-const _startup_server = async ( cfg: ILiweConfig, forced_port: number = 0 ): Promise<any> => {
-	const app = express();
-
-	return app;
-};
-*/
-
 /**
  * Bootstraps the whole LiWE Framework
  * This is the "kernel" version since it only creates the basic settings.
