@@ -4,7 +4,7 @@ import * as express from 'express';
 import * as formidable from 'formidable';
 
 import * as fs from './fs';
-import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfig, LiWEServerOptions } from './types';
+import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfig, LiWEServerOptions, ILError } from './types';
 import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, module_fullpath, config_load } from './liwe';
 import Defender, { applySettings } from './defender';
 import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
@@ -44,7 +44,7 @@ const _formidable = ( app: ILApplication, cfg: ILiweConfig ) => {
 		maxFileSize: cfg.upload.max_upload_size * 1024 * 1024,
 	} );
 
-	form.on( 'fileBegin', function ( name, file ) {
+	form.on( 'fileBegin', function ( name: string, file: any ) {
 		file.path = temp_fullpath() + "/" + mkid( 'file' ) + "." + file.name.split( "." ).slice( -1 );
 	} );
 
@@ -53,7 +53,7 @@ const _formidable = ( app: ILApplication, cfg: ILiweConfig ) => {
 		const ctype = req.header( 'content-type' ) || '';
 
 		if ( ctype.indexOf( 'multipart' ) != -1 ) {
-			form.parse( req, ( err, fields, files ) => {
+			form.parse( req, ( err: ILError, fields: any, files: any ) => {
 				if ( err ) {
 					console.error( "ERROR parsing form: ", err );
 				}
@@ -181,12 +181,12 @@ const _express_trace = ( app: ILApplication, cfg: ILiweConfig ) => {
 };
 
 const _defender = ( app: ILApplication, cfg: ILiweConfig ) => {
-	if ( !cfg.security.defender ) {
+	if ( !cfg?.security?.defender ) {
 		warn( "defender section not defined in cfg.security" );
 		return;
 	}
 
-	if ( !cfg.security.defender.enabled ) {
+	if ( !cfg?.security?.defender?.enabled ) {
 		warn( "Defender disabled" );
 		return;
 	}
@@ -288,7 +288,7 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 
 	// if ( liwe.app.socket ) liwe.app.socket.init( http );
 
-	if ( liwe.cfg.debug.enabled ) console.log( '\n== App started in DEBUG MODE ==' );
+	if ( liwe.cfg?.debug?.enabled ) console.log( '\n== App started in DEBUG MODE ==' );
 
 	return liwe;
 };
