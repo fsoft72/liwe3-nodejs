@@ -2,7 +2,7 @@
 import { LCback } from './types';
 import { shell } from './utils';
 
-interface IImageSize {
+interface ImageSize {
 	width: number | undefined;
 	height: number | undefined;
 }
@@ -11,10 +11,10 @@ interface IImageSize {
  *  resize - resizes the given image to the desider width / height maintaining aspect ratio or scaling fixed.
  *  At least width or height MUST be defined.
  *
- *  @param src_path - the original image file to be scaled
- *  @param dest_path - the destination path where to save the scaled image
- *  @param width - [0] the desired image width (can be 0 if you want to scale on height)
- *  @param height - [0] the desired image height (can be 0 if you want to scale on width)
+ *  @param src_path - the original image file to be scaled (full path + filename)
+ *  @param dest_path - the destination path where to save the scaled image (full path + filename)
+ *  @param width - the desired image width in px (can be 0 if you want to scale on height) [0]
+ *  @param height - the desired image height in px (can be 0 if you want to scale on width) [0]
  *  @param cback - Callback to be called on completion
  */
 export const resize = ( src_path: string, dest_path: string, width: number = 0, height: number = 0, cback: LCback = undefined ) => {
@@ -22,7 +22,7 @@ export const resize = ( src_path: string, dest_path: string, width: number = 0, 
 
 	return new Promise( ( resolve, reject ) => {
 		const img = sharp( src_path );
-		const size: IImageSize = { width: undefined, height: undefined };
+		const size: ImageSize = { width: undefined, height: undefined };
 
 		if ( width ) size.width = width;
 		if ( height ) size.height = height;
