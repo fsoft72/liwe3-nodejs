@@ -2,33 +2,42 @@ import { mkid } from "./arangodb";
 import { mkdir, move } from "./fs";
 import { ILRequest } from "./types";
 
-export const upload_move = ( req: ILRequest, field_name: string, dest_path: string, dest_fname?: string ) => {
+/**
+ * Parameters:
+ *
+ * @param req	- The Request object
+ * @param filed_name - The field name in the POST request
+ * @param dest_path  - The destination path (no file name, path only)
+ * @param filename - The filename used to save the file (optional)
+ * @param base_id   - The base name used to create the unique id (if not filename specified)
+ */
+export const upload_move = ( req: ILRequest, field_name: string, dest_path: string, filename?: string, base_id = 'file' ) => {
 	const finfo = upload_info( req, field_name );
 
-	if ( !finfo.size ) return {};
+	if ( !finfo.size ) return null;
 
 	mkdir( dest_path );
 
-	if ( !dest_fname ) dest_fname = mkid( 'file' ) + "." + finfo.ext;
-	const full_filename = dest_path + "/" + dest_fname;
+	if ( !filename ) filename = mkid( base_id ) + "." + finfo.ext;
+	const full_filename = dest_path + "/" + filename;
 
-	move( finfo.path, dest_path + "/" + dest_fname );
+	move( finfo.path, dest_path + "/" + filename );
 
-	return { path: dest_path, name: dest_fname, full_filename };
+	return { path: dest_path, name: filename, full_filename };
 };
 
 export const upload_info = ( req: ILRequest, field_name: string ) => {
-	if ( !req.files ) return {};
+	if ( !req.files ) return null;
 
 	const file: any = req.files[ field_name ];
 
-	if ( !file ) return {};
+	if ( !file ) return null;
 
 	return {
 		path: file.path,
 		size: file.size,
 		type: file.type,
 		name: file.name,
-		ext: file.name.split( "." ).slice( -1 )
+		ext: file.name.split( "." ).slice( -1 )[ 0 ]
 	};
 };
