@@ -10,7 +10,7 @@ import { LCback, ILRequest, ILResponse, ILiweConfig } from './types';
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
-import fetch from 'node-fetch';
+// import fetch from 'node-fetch';
 
 export const recaptcha_check = async ( captcha: string ) => {
 	const body = `response=${ captcha }&secret=${ cfg.user.recaptcha.secret }`;
@@ -408,6 +408,11 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 			res.___errors.push( field.name );
 			console.error( "ERROR: missing field: ", field.name );
 		}
+
+		// This is to handle JSON inside multipart-forms
+		try {
+			v = JSON.parse( v );
+		} catch ( e ) { }
 
 		if ( v !== undefined ) {
 			if ( isObject( type ) ) {
