@@ -336,3 +336,15 @@ export const collection_del_one_dict = async ( db: Database, coll_name: string, 
 
 	await coll.remove( r._id );
 };
+
+export const collection_del_all_dict = async ( db: Database, coll_name: string, data: any ) => {
+	const r: any[] = await collection_find_all_dict( db, coll_name, data );
+	if ( !r?.length ) return;
+
+	const coll: DocumentCollection = db.collection( coll_name );
+	if ( !coll ) return;
+
+	await Promise.all( r.map( ( el ) => coll.remove( el._id ) ) );
+
+	return;
+};
