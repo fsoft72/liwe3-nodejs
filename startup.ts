@@ -10,19 +10,17 @@ import Defender, { applySettings } from './defender';
 import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
 import { info, warn } from './console_colors';
 import { mkid } from './arangodb';
+import { loc } from './locale';
 
 // import { SocketIORouter } from './socketio';
 
-/** @ignore */
-/*
-const locale = ( app: ILApplication, cfg: ILiweConfig ) => {
+const locale = ( liwe: ILiWE ) => {
 	const { loc, express_init } = require( './locale' );
 
-	loc.set_default_language( cfg.app.default_language || 'en' );
+	loc.set_default_language( liwe.cfg.app.default_language || 'en' );
 
-	express_init( app );
+	express_init( liwe.app );
 };
-*/
 
 /** @ignore */
 const _cors = ( app: ILApplication, cfg: ILiweConfig ) => {
@@ -151,7 +149,7 @@ export const startup = async ( options: LiWEServerOptions = {} ): Promise<ILiWE>
 	make_default_dirs( upload_fullpath( 'temp' ) );
 	make_default_dirs( temp_fullpath() );
 
-	// locale( app, cfg );
+	locale( liwe );
 	// _session( app, cfg );
 	// const liwe_data: ILiWE = { app, cwd, app_name, cfg, port, module_init: null };
 
