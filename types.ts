@@ -72,6 +72,9 @@ export interface ILRequest extends express.Request {
 	/** The Response */
 	res: ILResponse;
 
+	/** The localization function */
+	$l?: ( key: string, val: object, plural: boolean, module: string ) => string;
+
 	/** The instance of the SocketIORouter (if enabled) */
 	// socketio?: SocketIORouter;
 
@@ -90,7 +93,8 @@ export type ILResponse = express.Response & {
 /** Extended express.Application */
 export interface ILApplication extends express.Application {
 	/** The database connection (if any) */
-	db?: any; // The Database Connection
+	db?: any;
+
 	/** Istance of the SocketIO Router */
 	// socket?: SocketIORouter;
 }
@@ -149,6 +153,9 @@ export interface ILiweConfig {
 	app: {
 		name: string;
 		default_language: string;
+
+		/** list of supported languages eg. [ "en", "it" ] */
+		languages: string[];
 
 		/** It T, the app returns domains in some points */
 		return_domains: boolean;
