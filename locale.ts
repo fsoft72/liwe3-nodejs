@@ -137,12 +137,14 @@ export const $l = ( key: string, val: object, plural: boolean = false, module: s
  * @param  language -  The language to load (eg. "it", "en", "es" )
  */
 export const locale_load = ( module: string, language: string ) => {
-	console.log( "      Loading: %s [%s]", module, language );
 	// const fname = fs.abspath ( `./locales/${module}/${language}.json` );
 	const fname = liwe.fsname( `etc/locales/${ module }.${ language }.json` );
 	let txt: string = fs.read( fname );
 
-	if ( !txt || !txt.length ) txt = "{}";
+	if ( !txt || !txt.length )
+		txt = "{}";
+	else
+		console.log( "        -- Loading: %s [%s]", module, language );
 
 	const messages: ILocString[] = JSON.parse( txt );
 
