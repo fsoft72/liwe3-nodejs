@@ -115,6 +115,11 @@ export const startup_kernel = async (): Promise<ILiWE> => {
 		db: null,
 	};
 
+	if ( !cfg?.app?.languages ) {
+		warn( "cfg.app.languages not defined" );
+		cfg.app.languages = [ 'en' ];
+	}
+
 	liwe.cwd = path.join( __dirname, '../..' );
 
 	const db = await require( './db_init' ).db_init( cfg );
