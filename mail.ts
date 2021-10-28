@@ -24,7 +24,6 @@ export const send_mail = async ( subject: string, text: string, html: string, to
 
 
 
-	const nodemailer = require( 'nodemailer' );
 	// Specify the fields in the email.
 	const mailOptions = {
 		from: from,
@@ -48,6 +47,8 @@ export const send_mail = async ( subject: string, text: string, html: string, to
 		console.log( "mailOptions: ", mailOptions );
 
 	if ( !send_for_real ) return cback( null, {} );
+
+	const nodemailer = require( 'nodemailer' );
 
 	const transporter = nodemailer.createTransport( {
 		// Create the SMTP transport.
