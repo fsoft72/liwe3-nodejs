@@ -26,11 +26,10 @@ export const upload_move = ( req: ILRequest, field_name: string, dest_path: stri
 	return { path: dest_path, name: filename, full_filename };
 };
 
-export const upload_info = ( req: ILRequest, field_name: string ) => {
+export const upload_info = ( req: ILRequest, field_name?: string, file?: any ) => {
 	if ( !req.files ) return null;
 
-	const file: any = req.files[ field_name ];
-
+	if ( field_name ) req.files[ field_name ];
 	if ( !file ) return null;
 
 	return {
