@@ -2,6 +2,21 @@ import { mkid } from "./arangodb";
 import { mkdir, move } from "./fs";
 import { ILRequest } from "./types";
 
+export interface UploadInfo {
+	/** The file path */
+	path: string;
+	/** The file size */
+	size: number;
+	/** The file type */
+	type: string;
+	/** The file name */
+	name: string;
+	/** The file extension */
+	ext: string;
+	/** the reference to the file */
+	file?: any;
+}
+
 /**
  * Parameters:
  *
@@ -26,7 +41,7 @@ export const upload_move = ( req: ILRequest, field_name: string, dest_path: stri
 	return { path: dest_path, name: filename, full_filename };
 };
 
-export const upload_info = ( req: ILRequest, field_name?: string, file?: any ) => {
+export const upload_info = ( req: ILRequest, field_name?: string, file?: any ): UploadInfo => {
 	if ( !req.files ) return null;
 
 	if ( field_name ) req.files[ field_name ];
@@ -37,6 +52,7 @@ export const upload_info = ( req: ILRequest, field_name?: string, file?: any ) =
 		size: file.size,
 		type: file.type,
 		name: file.name,
-		ext: file.name.split( "." ).slice( -1 )[ 0 ]
+		ext: file.name.split( "." ).slice( -1 )[ 0 ],
+		file: file
 	};
 };
