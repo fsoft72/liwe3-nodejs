@@ -156,12 +156,12 @@ export const collection_find_one = async ( db: Database, query: string, params: 
 	} );
 };
 
-export const collection_find_by_id = async ( coll: DocumentCollection, id: string ): Promise<any> => {
+export const collection_find_by_id = async ( coll: DocumentCollection, _id: string ): Promise<any> => {
 	try {
-		const res = await coll.document( id );
+		const res = await coll.document( _id );
 		return res;
 	} catch ( e ) {
-		console.error( "Document with ID: %s not found", id );
+		console.error( "Document with ID: %s not found", _id );
 		return null;
 	}
 };
