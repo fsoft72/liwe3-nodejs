@@ -278,7 +278,11 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 
 	liwe.app.get( '*', ( req, res ) => {
 		const url = req.originalUrl.replace( '/static/public', '' );
-		const fname = public_fullpath( url );
+		let fname = public_fullpath( url );
+
+		// remove query string
+		fname = fname.split( '&' )[ 0 ];
+
 		if ( fs.exists( fname ) ) return res.sendFile( fname );
 
 		console.error( 'MISSING URL: ', req.originalUrl, url, fname );
