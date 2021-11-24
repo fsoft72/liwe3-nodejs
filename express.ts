@@ -14,7 +14,7 @@ export const trace_request = ( req: ILRequest, res: ILResponse, next: any ) => {
 		txt.push( k + ": " + req.headers[ k ] );
 	txt.push( "====================== HEADERS                ================================" );
 
-	if ( req.method === 'POST' )
+	if ( req.method === 'POST' || req.method === 'PATCH' )
 		txt.push( JSON.stringify( req.body, null, 4 ) );
 	else {
 		txt.push( JSON.stringify( req.url, null, 4 ) );
