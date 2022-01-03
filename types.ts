@@ -192,6 +192,13 @@ export interface ILiweConfig {
 	};
 	upload: {
 		max_upload_size: number;
+		temp_dir: string;
+		sizes: {
+			thumb: number;
+			small: number;
+			medium: number;
+			large: number;
+		};
 	};
 	security: {
 		secret: string;
