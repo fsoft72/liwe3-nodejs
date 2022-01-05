@@ -236,7 +236,9 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 
 		val = data[ k ];
 
-		if ( typeof ( val ) == 'object' ) {
+		if ( Array.isArray( val ) ) {
+			mode = 'a';
+		} else if ( typeof ( val ) == 'object' ) {
 			mode = val.mode;
 			name = val.name || k;
 			val = val.val;
@@ -255,6 +257,13 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 				case 'null':
 					filters.push( `FILTER ${ prefix }.${ name } == null` );
 					break;
+				case 'a':
+					delete values[ k ];
+					val.forEach( ( v: any ) => {
+						filters.push( `FILTER '${ v }' IN ${ prefix }.${ k }` );
+					} );
+					break;
+
 				default:
 					filters.push( `FILTER ${ prefix }.${ name } ${ mode } @${ k }` );
 			}
