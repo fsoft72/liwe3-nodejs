@@ -551,7 +551,25 @@ export const keys_filter = ( obj: any, type_def: any ) => {
 
 	Object.keys( obj ).forEach( ( k ) => {
 		const el = type_def[ k ];
-		if ( !el || el.priv === true ) delete obj[ k ];
+		if ( !el ) {
+			delete obj[ k ];
+			return;
+		}
+
+		if ( el.priv === true ) {
+			delete obj[ k ];
+			return;
+		}
+
+		// If we expect a string, but the result is an array
+		// we keep only the first element
+		if ( el.type = 'string' && Array.isArray( obj[ k ] ) ) {
+			if ( obj[ k ].length === 0 ) {
+				obj[ k ] = '';
+			} else {
+				obj[ k ] = obj[ k ][ 0 ];
+			}
+		}
 	} );
 };
 
