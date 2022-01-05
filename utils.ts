@@ -546,6 +546,11 @@ export const set_attrs = ( obj: any, data: any ) => {
 	} );
 };
 
+/**
+ * Filters the keys of an object `obj` based on the
+ * specified fields in `type_def`.
+ * If a key is not in `type_def`, it is removed from `obj`.
+ */
 export const keys_filter = ( obj: any, type_def: any ) => {
 	if ( !obj ) return;
 
