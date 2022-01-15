@@ -676,3 +676,22 @@ export function merge ( target: any, ...sources: any[] ): any {
 
 	return merge( target, ...sources );
 }
+
+// Randomly extract an element from a list
+export const list_random_pick = ( lst: any[] ) => {
+	if ( !lst ) return '';
+
+	return lst[ Math.floor( Math.random() * lst.length ) ];
+};
+
+// Randomly extracts n elements from a list
+export const list_random_pick_n = ( lst: any[], n: number ) => {
+	if ( !lst ) return [];
+
+	const res: any[] = [];
+	for ( let i = 0; i < n; i++ ) {
+		res.push( list_random_pick( lst ) );
+	}
+
+	return res;
+};
