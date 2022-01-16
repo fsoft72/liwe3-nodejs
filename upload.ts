@@ -48,14 +48,12 @@ export const upload_info = ( req: ILRequest, field_name?: string, file?: any ): 
 	if ( field_name ) file = req.files[ field_name ];
 	if ( !file ) return null;
 
-	console.log( "***** FILE: ", file );
-
 	return {
-		path: file.filepath,
+		path: file.path,
 		size: file.size,
-		type: file.mimetype || mime.lookup( file.originalFilename ),
-		name: file.originalFilename,
-		ext: file.originalFilename.split( "." ).slice( -1 )[ 0 ],
+		type: file.mimetype || mime.lookup( file.name ),
+		name: file.name,
+		ext: file.name.split( "." ).slice( -1 )[ 0 ],
 		file: file
 	};
 };
