@@ -1,6 +1,7 @@
 import { mkid } from "./arangodb";
 import { mkdir, move } from "./fs";
 import { ILRequest } from "./types";
+import * as mime from 'mime-types';
 
 export interface UploadInfo {
 	/** The file path */
@@ -47,12 +48,14 @@ export const upload_info = ( req: ILRequest, field_name?: string, file?: any ): 
 	if ( field_name ) file = req.files[ field_name ];
 	if ( !file ) return null;
 
+	console.log( "***** FILE: ", file );
+
 	return {
-		path: file.path,
+		path: file.filepath,
 		size: file.size,
-		type: file.type,
-		name: file.name,
-		ext: file.name.split( "." ).slice( -1 )[ 0 ],
+		type: file.mimetype || mime.lookup( file.originalFilename ),
+		name: file.originalFilename,
+		ext: file.originalFilename.split( "." ).slice( -1 )[ 0 ],
 		file: file
 	};
 };
