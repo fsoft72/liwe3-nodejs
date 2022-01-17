@@ -2,6 +2,7 @@
 import * as path from 'path';
 import * as express from 'express';
 import * as formidable from 'formidable';
+import * as bodyParser from 'body-parser';
 
 import * as fs from './fs';
 import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfig, LiWEServerOptions, ILError } from './types';
@@ -11,6 +12,8 @@ import Throttler, { applySettings as applyThrottlerSettings } from './throttler'
 import { info, warn } from './console_colors';
 import { mkid } from './arangodb';
 import { loc } from './locale';
+import * as fileUpload from 'express-fileupload';
+import * as morgan from 'morgan';
 
 // import { SocketIORouter } from './socketio';
 
@@ -231,17 +234,31 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 
 	augment_request( liwe.app, liwe.cfg, liwe.db );
 
+	// Note that this option available for versions 1.0.0 and newer.
+	liwe.app.use( fileUpload( {
+		useTempFiles: true,
+		tempFileDir: '/tmp/',
+		preserveExtension: true,
+		abortOnLimit: true,
+		uriDecodeFileNames: true,
+		safeFileNames: true,
+		fileSize: liwe.cfg.server.max_post_size * 1024 * 1024,
+	} ) );
+
 	_defender( liwe.app, liwe.cfg );
 	_throttler( liwe.app, liwe.cfg );
-
 	_cors( liwe.app, liwe.cfg );
 
+	liwe.app.use( bodyParser.json() );
+	liwe.app.use( bodyParser.urlencoded( { extended: true } ) );
+	// liwe.app.use( morgan( 'dev' ) );
+
 	// This line parses JSON requests
-	liwe.app.use( express.json( { limit: '25mb' } ) );   // liwe.cfg.server.max_post_size } ) );
-	liwe.app.use( express.urlencoded( { extended: true, limit: '25mb' } ) );
+	//liwe.app.use( express.json( { limit: '25mb' } ) );   // liwe.cfg.server.max_post_size } ) );
+	//liwe.app.use( express.urlencoded( { extended: true, limit: '25mb' } ) );
+	// liwe.app.use( morgan( 'dev' ) );
 
-	_formidable( liwe.app, liwe.cfg );
-
+	// _formidable( liwe.app, liwe.cfg );
 	_express_trace( liwe.app, liwe.cfg );
 
 	// curl( app, cfg );

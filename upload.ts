@@ -16,6 +16,9 @@ export interface UploadInfo {
 	ext: string;
 	/** the reference to the file */
 	file?: any;
+
+	/** MD5 hash of the file */
+	md5?: string;
 }
 
 /**
@@ -51,9 +54,11 @@ export const upload_info = ( req: ILRequest, field_name?: string, file?: any ): 
 	return {
 		path: file.path,
 		size: file.size,
-		type: file.mimetype || mime.lookup( file.name ),
+		//type: file.mimetype || mime.lookup( file.name ),
+		type: mime.lookup( file.name ) as string,
 		name: file.name,
 		ext: file.name.split( "." ).slice( -1 )[ 0 ],
+		md5: file.md5,  // fileUpload
 		file: file
 	};
 };
