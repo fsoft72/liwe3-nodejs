@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as path from 'path';
 import * as express from 'express';
-import * as formidable from 'formidable';
 import * as bodyParser from 'body-parser';
 
 import * as fs from './fs';
@@ -35,42 +34,6 @@ const _cors = ( app: ILApplication, cfg: ILiweConfig ) => {
 	};
 
 	app.use( cors( corsOptions ) );
-};
-
-const _formidable = ( app: ILApplication, cfg: ILiweConfig ) => {
-	const form = formidable( {
-		multiples: true,
-		keepExtensions: true,
-		allowEmptyFiles: false,
-		maxFileSize: cfg.upload.max_upload_size * 1024 * 1024,
-	} );
-
-	form.on( 'fileBegin', function ( name: string, file: any ) {
-		file.path = temp_fullpath() + "/" + mkid( 'file' ) + "." + file.name.split( "." ).slice( -1 );
-	} );
-
-
-	app.use( ( req: ILRequest, res: ILResponse, next: ILNextFunction ) => {
-		const ctype = req.header( 'content-type' ) || '';
-
-		if ( ctype.indexOf( 'multipart' ) != -1 ) {
-			form.parse( req, ( err: ILError, fields: any, files: any ) => {
-				if ( err ) {
-					console.error( "ERROR parsing form: ", err );
-				}
-
-				req.fields = fields;
-				req.files = files;
-
-				next();
-			} );
-		} else {
-			req.fields = { ...req.body };
-			req.files = null;
-			next();
-		}
-	} );
-
 };
 
 /** @ignore */
@@ -258,7 +221,6 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 	//liwe.app.use( express.urlencoded( { extended: true, limit: '25mb' } ) );
 	// liwe.app.use( morgan( 'dev' ) );
 
-	// _formidable( liwe.app, liwe.cfg );
 	_express_trace( liwe.app, liwe.cfg );
 
 	// curl( app, cfg );
