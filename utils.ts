@@ -537,7 +537,7 @@ export const set_attr = ( obj: any, field_name: string, val: any ) => {
  * sets multiple attributes to  `obj` only if `val` is not undefined.
  */
 export const set_attrs = ( obj: any, data: any ) => {
-	Object.keys( obj ).forEach( ( k: string ) => {
+	Object.keys( data ).forEach( ( k: string ) => {
 		const v = data[ k ];
 
 		if ( v === undefined ) return;
@@ -555,20 +555,23 @@ export const keys_filter = ( obj: any, type_def: any ) => {
 	if ( !obj ) return;
 
 	Object.keys( obj ).forEach( ( k ) => {
+		// if the key is not in the type definition, remove it
 		const el = type_def[ k ];
 		if ( !el ) {
 			delete obj[ k ];
 			return;
 		}
 
+		// if the key is private, remove it
 		if ( el.priv === true ) {
 			delete obj[ k ];
 			return;
 		}
 
+
 		// If we expect a string, but the result is an array
 		// we keep only the first element
-		if ( el.type = 'string' && Array.isArray( obj[ k ] ) ) {
+		if ( el.type == 'string' && Array.isArray( obj[ k ] ) ) {
 			if ( obj[ k ].length === 0 ) {
 				obj[ k ] = '';
 			} else {
