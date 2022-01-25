@@ -257,6 +257,9 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 				case 'null':
 					filters.push( `FILTER ${ prefix }.${ name } == null` );
 					break;
+				case 'ft':
+				case 'fulltext':
+					break;
 				case 'a':
 					delete values[ k ];
 					val.forEach( ( v: any ) => {
