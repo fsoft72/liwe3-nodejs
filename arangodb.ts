@@ -263,6 +263,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 				case 'a':
 					delete values[ k ];
 					val.forEach( ( v: any ) => {
+						if ( !v?.length ) return;
 						filters.push( `FILTER '${ v }' IN ${ prefix }.${ k }` );
 					} );
 					break;
