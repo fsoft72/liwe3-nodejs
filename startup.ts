@@ -12,7 +12,6 @@ import { info, warn } from './console_colors';
 import { mkid } from './arangodb';
 import { loc } from './locale';
 import * as fileUpload from 'express-fileupload';
-import * as morgan from 'morgan';
 
 // import { SocketIORouter } from './socketio';
 
@@ -214,12 +213,10 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 
 	liwe.app.use( bodyParser.json() );
 	liwe.app.use( bodyParser.urlencoded( { extended: true } ) );
-	// liwe.app.use( morgan( 'dev' ) );
 
 	// This line parses JSON requests
 	//liwe.app.use( express.json( { limit: '25mb' } ) );   // liwe.cfg.server.max_post_size } ) );
 	//liwe.app.use( express.urlencoded( { extended: true, limit: '25mb' } ) );
-	// liwe.app.use( morgan( 'dev' ) );
 
 	_express_trace( liwe.app, liwe.cfg );
 
