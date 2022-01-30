@@ -1,9 +1,11 @@
 import { Database } from "arangojs";
 import { DocumentCollection } from "arangojs/collection";
+import { Analyzer } from "arangojs/analyzer";
 
 import { config_load } from "./liwe";
 import { ILiweConfig } from "./types";
 import { keys_filter, unique_code } from "./utils";
+import { ArangoSearchViewPropertiesOptions } from "arangojs/view";
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
@@ -16,11 +18,31 @@ export interface DBCollectionIndex {
 	deduplicate?: boolean;
 }
 
+export interface DBCollectionCreateOptions {
+	/** Set this to true if you want to drop the collection if it already exists. */
+	drop?: boolean;
+}
+
 export const arango_init = async ( cfg: any ): Promise<Database> => {
 	const adb = new Database();
 	await adb.exists();
 
 	return adb;
+};
+
+const _check_default_analyzers = async ( db: Database ) => {
+	const analyzers = [ 'norm_it', 'norm_en' ];
+
+	await Promise.all( analyzers.map( async ( name ) => {
+		const analyzer = db.analyzer( name );
+		if ( !analyzer || ! await analyzer.exists() ) {
+			console.log( `  -- DB: Analyzer ${ name } MISSING` );
+
+			const locale = name == 'norm_en' ? 'en.utf-8' : 'it.utf-8';
+
+			analyzer.create( { type: 'norm', properties: { locale, accent: false, case: "lower" } } );
+		}
+	} ) );
 };
 
 export const database_create = async ( adb: Database, name: string ): Promise<Database> => {
@@ -31,6 +53,8 @@ export const database_create = async ( adb: Database, name: string ): Promise<Da
 	} catch ( e ) {
 		db = await adb.database( name );
 	}
+
+	_check_default_analyzers( db );
 
 	return db;
 };
@@ -48,10 +72,10 @@ export const database_drop = async ( adb: Database, name: string ): Promise<bool
 	return res;
 };
 
-export const collection_create = async ( db: Database, name: string, drop: boolean = false ): Promise<any> => {
+export const collection_create = async ( db: Database, name: string, options: DBCollectionCreateOptions = null ): Promise<any> => {
 	let coll;
 
-	if ( drop ) {
+	if ( options?.drop ) {
 		coll = await db.collection( name );
 		if ( coll ) {
 			try {
@@ -180,8 +204,9 @@ export const collection_count = async ( db: Database, query: string, params: any
 	} );
 };
 
-export const collection_init = async ( db: Database, name: string, idx: DBCollectionIndex[] = null, force: boolean = false ) => {
-	const coll = await collection_create( db, name, force );
+export const collection_init = async ( db: Database, name: string, idx: DBCollectionIndex[] = null, options: DBCollectionCreateOptions = null ) => {
+	const coll = await collection_create( db, name, options );
+	const ft_fields: any = {};
 
 	if ( idx && idx.length ) {
 		await Promise.all( idx.map( ( p ) => {
@@ -189,7 +214,36 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
 			p.name = `idx_${ name }_${ fields }`;
 			// console.log( "NAME: ", p.name );
 			coll.ensureIndex( p );
+
+			if ( p.type == 'fulltext' ) ft_fields[ fields ] = { "analyzers": [ "norm_it", "identity" ], "includeAllFields": false, "storeValues": "none", "trackListPositions": false };
 		} ) );
+	}
+
+	// If the collection has fulltext indexes, we need to create a special view
+	if ( Object.keys( ft_fields ).length ) {
+		const view_opts: any = {  //ArangoSearchViewPropertiesOptions = {
+			"writebufferIdle": 64,
+			"writebufferSizeMax": 33554432,
+			"consolidationPolicy": {
+				"type": "tier",
+				"segmentsBytesFloor": 2097152,
+				"segmentsBytesMax": 5368709120,
+				"segmentsMax": 10,
+				"segmentsMin": 1,
+				"minScore": 0
+			},
+			"writebufferActive": 0,
+			"consolidationIntervalMsec": 1000,
+			"cleanupIntervalStep": 2,
+			"commitIntervalMsec": 1000,
+			"primarySortCompression": "lz4"
+		};
+
+		const links = { [ name ]: { "analyzers": [ "identity" ], fields: ft_fields } };
+		view_opts.links = links;
+		const v_name = `v_${ name }`;
+
+		await db.createView( `v_${ name }`, view_opts );
 	}
 
 	return coll;
