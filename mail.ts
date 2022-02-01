@@ -17,18 +17,18 @@ const cfg: ILiweConfig = config_load( 'data', {}, true, true );
  * @param from sender email
  * @param cback the cback to be called
  */
-export const send_mail = async ( subject: string, text: string, html: string, to: string, from: string, cback: LCback ) => {
+export const send_mail = async ( subject: string, text: string, html: string, to: string, from: string, reply_to: string, cback: LCback ) => {
 	const { protocol, login, password, server, send_for_real, dump_on_console, port } = cfg.smtp;
 
 	if ( !from ) from = login;
-
-
+	if ( !reply_to ) reply_to = from;
 
 	// Specify the fields in the email.
 	const mailOptions = {
 		from: from,
 		to,
 		subject,
+		reply_to,
 		// cc: ccAddresses,
 		// bcc: bccAddresses,
 		text,
@@ -64,6 +64,8 @@ export const send_mail = async ( subject: string, text: string, html: string, to
 	// Send the email.
 	let info = await transporter.sendMail( mailOptions );
 
+	cback && cback( null, info );
+
 	// console.log( "Message sent! Message ID: ", info.messageId );
 };
 
@@ -79,11 +81,11 @@ export const send_mail = async ( subject: string, text: string, html: string, to
  * @param cback the cback to be called
  *
  */
-export const send_mail_template = ( subject: string, template: string, args: object, to: string, from: string, cback: LCback ) => {
+export const send_mail_template = ( subject: string, template: string, args: object, to: string, from: string, reply_to: string, cback: LCback ) => {
 	const html = template_render( template, args );
 	const text = template_render( template.replace( ".html", ".txt" ), args );
 
-	return send_mail( subject, text, html, to, from, ( err: any ) => {
+	return send_mail( subject, text, html, to, from, reply_to, ( err: any ) => {
 		if ( err ) return cback && cback( err );
 
 		return cback && cback( null, { subject, text, html, to, from } );
@@ -100,15 +102,16 @@ export const send_mail_template = ( subject: string, template: string, args: obj
  * @param args  Arguments to be passed to the template composition
  * @param to  destination user
  * @param from sender email
+ * @param reply_to where to reply
  * @param cback the cback to be called
  *
  */
-export const send_mail_template_locale = ( module: string, template_filename: string, language: string, subject: string, args: object, to: string, from: string, cback: LCback ) => {
+export const send_mail_template_locale = ( module: string, template_filename: string, language: string, subject: string, args: object, to: string, from: string, reply_to: string, cback: LCback ) => {
 	const fname = fsname( `etc/templates/${ module }` );
 	let dname = '';
 
 	const _send_all = ( dfname: string ) => {
-		return send_mail_template( subject, dfname, args, to, from, cback );
+		return send_mail_template( subject, dfname, args, to, from, reply_to, cback );
 	};
 
 	if ( !fs.existsSync( fname ) ) return cback( { message: "Directory not found: " + fname } );
