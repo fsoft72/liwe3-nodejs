@@ -48,11 +48,25 @@ const _check_default_analyzers = async ( db: Database ) => {
 export const database_create = async ( adb: Database, name: string ): Promise<Database> => {
 	let db: Database;
 
-	try {
+	await adb.database( name );
+	if ( !adb.exists() ) {
 		db = await adb.createDatabase( name );
-	} catch ( e ) {
-		db = await adb.database( name );
-	}
+	} else
+		db = adb;
+
+
+	/*
+
+try {
+	db = await adb.createDatabase( name );
+} catch ( e ) {
+	console.error( "===== EXCEPTION: ", e );
+
+	db = await adb.database( name );
+}
+*/
+
+	// console.error( "===== DB IS NOW: ", db );
 
 	_check_default_analyzers( db );
 
@@ -242,8 +256,10 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
 		const links = { [ name ]: { "analyzers": [ "identity" ], fields: ft_fields } };
 		view_opts.links = links;
 		const v_name = `v_${ name }`;
+		const views = await db.listViews();
 
-		await db.createView( `v_${ name }`, view_opts );
+		if ( !views.find( ( v ) => v.name == v_name ) )
+			await db.createView( `v_${ name }`, view_opts );
 	}
 
 	return coll;
