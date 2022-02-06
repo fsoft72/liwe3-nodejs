@@ -181,8 +181,11 @@ export interface ILiweConfig {
 		auth_dump: boolean;
 	};
 
+	/** The server configuration section */
 	server: {
+		/** Server listen port */
 		port: number;
+		/** The real url of the server */
 		url: string;
 		public_url: string;
 		public_name: string;
@@ -204,6 +207,9 @@ export interface ILiweConfig {
 		secret: string;
 		enable_cookie: boolean;
 		cookie: string;
+
+		/** The unique key used to challenge remote public requests */
+		remote: string;
 
 		enable_token: boolean;
 		header: string;

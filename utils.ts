@@ -698,3 +698,31 @@ export const list_random_pick_n = ( lst: any[], n: number ) => {
 
 	return res;
 };
+
+
+/**
+ * takes a list of strings and returns a valid challenge
+ */
+export const challenge_create = ( params: string[] ) => {
+	const s: string[] = params.map( ( p ) => p.toString().toLowerCase() );
+	s.push( cfg.security.remote );
+
+	//console.log( "----- CHALLENGHE: ", s.join( '-' ) );
+
+	return md5( s.join( '-' ) );
+};
+
+/**
+ * takes a list of strings and check it agains the provided challenge
+ *
+ * @param challenge	the challenge to check
+ * @param params	the list of strings to check
+ *
+ * @returns true if the challenge is valid
+ */
+export const challenge_check = ( challenge: string, params: string[] ): boolean => {
+	const ch = challenge_create( params );
+
+	// console.log( "SENT MD5: %s - VALID: %s", challenge, ch );
+	return ch === challenge;
+};

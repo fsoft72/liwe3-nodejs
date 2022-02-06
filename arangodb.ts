@@ -48,23 +48,15 @@ const _check_default_analyzers = async ( db: Database ) => {
 export const database_create = async ( adb: Database, name: string ): Promise<Database> => {
 	let db: Database;
 
-	await adb.database( name );
-	if ( !adb.exists() ) {
+	// list all databases
+	const dbs = await adb.listDatabases();
+
+	if ( dbs.includes( name ) ) {
+		db = await adb.database( name );
+	} else {
 		db = await adb.createDatabase( name );
-	} else
-		db = adb;
-
-
-	/*
-
-try {
-	db = await adb.createDatabase( name );
-} catch ( e ) {
-	console.error( "===== EXCEPTION: ", e );
-
-	db = await adb.database( name );
-}
-*/
+		await db.exists();
+	}
 
 	// console.error( "===== DB IS NOW: ", db );
 
@@ -75,11 +67,12 @@ try {
 
 export const database_drop = async ( adb: Database, name: string ): Promise<boolean> => {
 	let res = false;
+
 	try {
 		await adb.dropDatabase( name );
 		res = true;
 	} catch ( e ) {
-		console.error( "ERROR: ", e );
+		// console.error( "ERROR: ", e );
 		// throw ( e );
 	}
 
