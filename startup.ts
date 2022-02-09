@@ -47,7 +47,7 @@ const augment_request = ( app: ILApplication, cfg: ILiweConfig, db: any ) => {
 };
 
 /** @ignore */
-const _module_init = ( name: string, liwe: ILiWE ) => {
+const _module_init = async ( name: string, liwe: ILiWE ) => {
 	const mod_dirname = module_fullpath( name );
 	if ( !fs.exists( mod_dirname ) ) {
 		console.error( `*** ERROR: module ${ name } not found in ${ mod_dirname }` );
@@ -55,9 +55,9 @@ const _module_init = ( name: string, liwe: ILiWE ) => {
 	}
 
 	const mi = require( `${ mod_dirname }/methods` ).middleware_init;
-	if ( mi ) mi( liwe );
+	if ( mi ) await mi( liwe );
 
-	require( `${ mod_dirname }/endpoints` ).init( liwe );
+	await require( `${ mod_dirname }/endpoints` ).init( liwe );
 };
 
 /**
@@ -242,13 +242,16 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 
 	// bootstrap of main modules
 	const mods: string[] = liwe.cfg.app.startup?.modules || [];
-	mods.forEach( ( mod ) => liwe.module_init( mod ) );
+
+	await Promise.all( mods.map( async ( m ) => await liwe.module_init( m ) ) );
+	// mods.forEach( ( mod ) => liwe.module_init( mod ) );
 
 	// init of remaining modules
-	modules.forEach( ( m ) => {
-		if ( mods.indexOf( m ) != -1 ) return;
-		liwe.module_init( m );
-	} );
+	await Promise.all( modules.map( async ( m ) => {
+		if ( mods.indexOf( m ) != -1 ) return null;
+		return await liwe.module_init( m );
+	}
+	) );
 
 	console.log( '=========================\n\n' );
 

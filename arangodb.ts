@@ -216,12 +216,20 @@ export const collection_init = async ( db: Database, name: string, idx: DBCollec
 	const ft_fields: any = {};
 
 	if ( idx && idx.length ) {
-		await Promise.all( idx.map( ( p ) => {
+		await Promise.all( idx.map( async ( p ) => {
 			const fields = p.fields.join( '_' ).replace( "[*]", "" );
 			p.name = `idx_${ name }_${ fields }`;
 			// console.log( "NAME: ", p.name );
-			coll.ensureIndex( p );
 
+			if ( p.type != 'fulltext' ) {
+				try {
+					await coll.ensureIndex( p );
+				} catch ( e ) {
+					console.error( "ERROR CREATING INDEX: ", p.name );
+				}
+			}
+
+			// TODO: fulltext indexes need much more love ;-)
 			if ( p.type == 'fulltext' ) ft_fields[ fields ] = { "analyzers": [ "norm_it", "identity" ], "includeAllFields": false, "storeValues": "none", "trackListPositions": false };
 		} ) );
 	}
