@@ -310,6 +310,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 		if ( Array.isArray( val ) ) {
 			mode = 'a';
 			name = k;
+			val = val.filter( ( v ) => v !== null && v !== undefined && v.length );
 		} else if ( typeof ( val ) == 'object' ) {
 			mode = val.mode;
 			name = val.name || k;
@@ -334,7 +335,19 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 					break;
 				case 'a':
 					delete values[ k ];
-					if ( val.length ) filters.push( `FILTER ${ prefix }.${ name } IN ${ JSON.stringify( val ) }` );
+					// console.log( "\n\n\n======= ", { prefix, name, val, mode } );
+
+					// FIXME: this is a MEGA PATCH  (tags search is different from other "IN" searches)
+					if ( name != 'tags' ) {
+						if ( val.length ) {
+							filters.push( `FILTER ${ prefix }.${ name } IN ${ JSON.stringify( val ) }` );
+						}
+					} else {
+						val.forEach( ( v: any ) => {
+							if ( !v?.length ) return;
+							filters.push( `FILTER '${ v }' IN ${ prefix }.${ k }` );
+						} );
+					}
 					break;
 
 				default:
@@ -343,7 +356,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 		}
 	} );
 
-	return [ filters.join( ' ' ) + limit, values ];
+	return [ filters.join( '\n' ) + limit, values ];
 };
 
 export const mkid = ( prefix: string ) => {
