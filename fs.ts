@@ -109,3 +109,7 @@ export const tmp_file = ( path: string, name: string = '', mode = 0o600 ) => {
 	return full_path;
 };
 */
+
+export const symlink = ( src: string, dest: string ): void => {
+	fs.symlinkSync( src, dest );
+};
