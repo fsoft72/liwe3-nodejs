@@ -309,6 +309,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 
 		if ( Array.isArray( val ) ) {
 			mode = 'a';
+			name = k;
 		} else if ( typeof ( val ) == 'object' ) {
 			mode = val.mode;
 			name = val.name || k;
@@ -333,10 +334,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 					break;
 				case 'a':
 					delete values[ k ];
-					val.forEach( ( v: any ) => {
-						if ( !v?.length ) return;
-						filters.push( `FILTER '${ v }' IN ${ prefix }.${ k }` );
-					} );
+					if ( val.length ) filters.push( `FILTER ${ prefix }.${ name } IN ${ JSON.stringify( val ) }` );
 					break;
 
 				default:
