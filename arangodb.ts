@@ -188,6 +188,7 @@ export const collection_find_one = async ( db: Database, query: string, params: 
 };
 
 export const collection_find_by_id = async ( coll: DocumentCollection, _id: string ): Promise<any> => {
+	console.warn( "DEPRECATED: collection_find_by_id, use collection_find_one_dict()" );
 	try {
 		const res = await coll.document( _id );
 		return res;
