@@ -544,6 +544,8 @@ export const set_attrs = ( obj: any, data: any ) => {
 
 		obj[ k ] = v;
 	} );
+
+	return obj;
 };
 
 /**
