@@ -339,16 +339,18 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 					// console.log( "\n\n\n======= ", { prefix, name, val, mode } );
 
 					// FIXME: this is a MEGA PATCH  (tags search is different from other "IN" searches)
+					/*
 					if ( name != 'tags' ) {
 						if ( val.length ) {
 							filters.push( `FILTER ${ prefix }.${ name } IN ${ JSON.stringify( val ) }` );
 						}
 					} else {
-						val.forEach( ( v: any ) => {
-							if ( !v?.length ) return;
-							filters.push( `FILTER '${ v }' IN ${ prefix }.${ k }` );
-						} );
-					}
+						*/
+					val.forEach( ( v: any ) => {
+						if ( !v?.length ) return;
+						filters.push( `FILTER '${ v }' IN ${ prefix }.${ k }` );
+					} );
+					// }
 					break;
 
 				default:
@@ -357,7 +359,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 		}
 	} );
 
-	return [ filters.join( '\n' ) + limit, values ];
+	return [ filters.join( '\n    ' ) + limit, values ];
 };
 
 export const mkid = ( prefix: string ) => {
@@ -407,7 +409,7 @@ export const collection_find_all_dict = async ( db: Database, coll_name: string,
 	if ( _sort.length )
 		sort = `SORT ${ _sort.join( ', ' ) }`;
 
-	return await collection_find_all( db, `FOR o IN ${ coll_name } ${ filters } ${ sort } ${ limit } RETURN o`, values, data_type );
+	return await collection_find_all( db, `\n  FOR o IN ${ coll_name }\n    ${ filters } ${ sort } ${ limit }\n  RETURN o`, values, data_type );
 };
 
 /**
