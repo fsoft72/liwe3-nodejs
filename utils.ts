@@ -706,10 +706,10 @@ export const list_random_pick_n = ( lst: any[], n: number ) => {
  * takes a list of strings and returns a valid challenge
  */
 export const challenge_create = ( params: string[] ) => {
-	const s: string[] = params.map( ( p ) => p?.toString().toLowerCase() );
+	const s: string[] = params.map( ( p ) => p?.toString().toLowerCase() ).sort();
 	s.push( cfg.security.remote );
 
-	//console.log( "----- CHALLENGHE: ", s.join( '-' ) );
+	// console.log( "----- SERVER CHALLENGE: ", s.join( '-' ) );
 
 	return md5( s.join( '-' ) );
 };
