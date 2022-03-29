@@ -193,6 +193,16 @@ export interface ILiweConfig {
 		max_post_size: number;
 		dump_ip: boolean;
 	};
+
+	/** The TUS server for file uploads */
+	tus: {
+		/** Server listen port */
+		port: number;
+
+		/** TUS Secret */
+		secret: string;
+	};
+
 	upload: {
 		max_upload_size: number;
 		temp_dir: string;
