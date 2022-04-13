@@ -161,6 +161,8 @@ export const collection_add_all = async ( coll: DocumentCollection, data: any ):
  */
 export const collection_find_all = async ( db: Database, query: string, params: any = undefined, data_type: any = undefined ): Promise<any> => {
 	if ( cfg.debug?.query_dump ) console.log( "AQL query: ", query, params );
+	if ( !params ) params = {};
+
 	const data: any = await db.query( query, params );
 	const res: any[] = await data.all();
 
