@@ -608,7 +608,7 @@ export const list_add = ( lst: string[], el: string ) => {
 	if ( !lst ) lst = [];
 
 	el = el.toLowerCase();
-	if ( lst.indexOf( el ) != -1 ) lst;
+	if ( lst.indexOf( el ) != -1 ) return lst;
 
 	lst.push( el );
 
