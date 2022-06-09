@@ -9,6 +9,11 @@ import { ArangoSearchViewPropertiesOptions } from "arangojs/view";
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
+export interface QueryOptions {
+	/** If T, the query will return also the count of documents */
+	count?: boolean;
+}
+
 export interface DBCollectionIndex {
 	type: "hash" | "persistent" | "skiplist" | "ttl" | "geo" | "fulltext";
 	name?: string;
@@ -158,8 +163,9 @@ export const collection_add_all = async ( coll: DocumentCollection, data: any ):
  * @param  query  - the AQL query
  * @param  params - a key/value pairs of params present in the query
  * @param  data_type - if present, result list will be filtered before returning
+ * @param  options - Query options that change the behaviour of the query
  */
-export const collection_find_all = async ( db: Database, query: string, params: any = undefined, data_type: any = undefined ): Promise<any> => {
+export const collection_find_all = async ( db: Database, query: string, params: any = undefined, data_type: any = undefined, options?: QueryOptions ): Promise<any> => {
 	if ( cfg.debug?.query_dump ) console.log( "AQL query: ", query, params );
 	if ( !params ) params = {};
 
@@ -167,6 +173,12 @@ export const collection_find_all = async ( db: Database, query: string, params: 
 	const res: any[] = await data.all();
 
 	if ( data_type ) res.forEach( ( el ) => keys_filter( el, data_type ) );
+
+	if ( options?.count ) {
+		const count = await collection_count( db, query, params );
+
+		res.forEach( ( el ) => el.__count = count );
+	}
 
 	return res;
 };
@@ -204,8 +216,17 @@ export const collection_find_by_id = async ( coll: DocumentCollection, _id: stri
  * In `query` just put 'FOR ... IN ....' and FILTERs  (no RETURN)
  */
 export const collection_count = async ( db: Database, query: string, params: any = undefined ): Promise<number> => {
+	// remove the LIMIT from query string
+	const q = query.replace( /\s+LIMIT\s+[0-9]+,\s*[0-9]+/i, "" );
+
+	// replace endlines with spaces
+	const q2 = q.replace( /\n|\r/g, " " );
+
+	// remove from RETURN { to end of text (multi line)
+	const q3 = q2.replace( /\s+RETURN\s+\{.*/, "" );
+
 	return new Promise( async ( resolve, reject ) => {
-		query = `${ query } COLLECT WITH COUNT INTO length  RETURN length`;
+		query = `${ q3 } COLLECT WITH COUNT INTO length  RETURN length`;
 		const res = await collection_find_one( db, query, params );
 
 		if ( res === null ) return resolve( 0 );
