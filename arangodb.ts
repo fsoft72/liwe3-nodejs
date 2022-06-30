@@ -452,6 +452,13 @@ export const collection_find_one_dict = async ( db: Database, coll_name: string,
 	return await collection_find_one( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values, data_type );
 };
 
+/**
+ * removes one element from a collection
+ *
+ * @param db          the database to query onto
+ * @param coll_name   the collection name
+ * @param data        the data to filter on (key/val)
+ */
 export const collection_del_one_dict = async ( db: Database, coll_name: string, data: any ) => {
 	const r = await collection_find_one_dict( db, coll_name, data );
 	if ( !r ) return;
