@@ -1,4 +1,4 @@
-import { mkid } from "./arangodb";
+import { mkid } from "./utils";
 import { mkdir, move } from "./fs";
 import { ILRequest } from "./types";
 import * as mime from 'mime-types';

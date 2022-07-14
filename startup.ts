@@ -9,8 +9,7 @@ import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, mod
 import Defender, { applySettings } from './defender';
 import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
 import { info, warn } from './console_colors';
-import { mkid } from './arangodb';
-import { loc } from './locale';
+// import { loc } from './locale';
 import * as fileUpload from 'express-fileupload';
 
 // import { SocketIORouter } from './socketio';
