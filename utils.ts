@@ -166,6 +166,18 @@ export const unique_code = ( simple: boolean = true, prefix: string = null, seco
 };
 
 /**
+ * @description This function returns an unique id, the id starts with the prefix and can optionally contain an extension
+ * @param prefix - The prefix to add to the string
+ * @param ext - The extension to add to the string
+ */
+export const mkid = ( prefix: string, ext?: string ) => {
+	if ( !ext ) ext = '';
+	if ( ext && ext.length && !ext.startsWith( '.' ) ) ext = `.${ ext }`;
+
+	return `${ unique_code( false, prefix ) }${ ext }`;
+};
+
+/**
  * returns a random string of specified ``length`` using a randomizer of ``iterations``.
  *
  * @param length:  the length of the random string

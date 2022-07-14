@@ -388,11 +388,6 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 	return [ filters.join( '\n    ' ) + limit, values ];
 };
 
-export const mkid = ( prefix: string ) => {
-	return unique_code( false, prefix );
-};
-
-
 interface SortOptions {
 	field: string;
 	desc?: number;
