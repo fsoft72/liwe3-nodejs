@@ -465,6 +465,7 @@ export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 
 					case "date":
 						v = new Date( v );
+						if ( !isValidDate( v ) ) v = new Date();
 						break;
 
 					case "recaptcha":
@@ -513,6 +514,12 @@ export const isValidEmail = ( email: string ): boolean => {
 	if ( !email || !email.length ) return false;
 	return !!email.match( /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ );
 };
+
+/*
+export const isValidDate = ( d: any ) => {
+	return d instanceof Date && !isNaN( d );
+};
+*/
 
 export const int = ( s: any ): number => {
 	if ( typeof ( s ) === 'undefined' ) s = "0";
