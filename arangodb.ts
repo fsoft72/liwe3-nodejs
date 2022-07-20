@@ -1,11 +1,9 @@
 import { Database } from "arangojs";
 import { DocumentCollection } from "arangojs/collection";
-import { Analyzer } from "arangojs/analyzer";
 
 import { config_load } from "./liwe";
 import { ILiweConfig } from "./types";
-import { keys_filter, unique_code } from "./utils";
-import { ArangoSearchViewPropertiesOptions } from "arangojs/view";
+import { keys_filter } from "./utils";
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
@@ -40,7 +38,7 @@ const _check_default_analyzers = async ( db: Database ) => {
 
 	await Promise.all( analyzers.map( async ( name ) => {
 		const analyzer = db.analyzer( name );
-		if ( !analyzer || ! await analyzer.exists() ) {
+		if ( !analyzer || !( await analyzer.exists() ) ) {
 			console.log( `  -- DB: Analyzer ${ name } MISSING` );
 
 			const locale = name == 'norm_en' ? 'en.utf-8' : 'it.utf-8';
@@ -226,7 +224,7 @@ export const collection_count = async ( db: Database, query: string, params: any
 	const q2 = q.replace( /\n|\r/g, " " );
 
 	// remove from RETURN { to end of text (multi line)
-	const q3 = q2.replace( /\s+RETURN\s+\{.*/, "" );
+	const q3 = q2.replace( /\s+RETURN\s+.*/, "" );
 
 	return new Promise( async ( resolve, reject ) => {
 		query = `${ q3 } COLLECT WITH COUNT INTO length  RETURN length`;
@@ -397,6 +395,9 @@ interface CollectionFindAllOptions {
 	rows?: number;
 	skip?: number;
 	sort?: SortOptions[];
+
+	/** If T, the query will return also the count of documents */
+	count?: boolean;
 }
 
 /**
@@ -430,7 +431,7 @@ export const collection_find_all_dict = async ( db: Database, coll_name: string,
 	if ( _sort.length )
 		sort = `SORT ${ _sort.join( ', ' ) }`;
 
-	return await collection_find_all( db, `\n  FOR o IN ${ coll_name }\n    ${ filters } ${ sort } ${ limit }\n  RETURN o`, values, data_type );
+	return await collection_find_all( db, `\n  FOR o IN ${ coll_name }\n    ${ filters } ${ sort } ${ limit }\n  RETURN o`, values, data_type, { count: options?.count } );
 };
 
 /**
