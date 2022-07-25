@@ -418,8 +418,6 @@ export const collection_find_all_dict = async ( db: Database, coll_name: string,
 
 	if ( skip && !rows ) rows = 9999999;
 
-	if ( rows > 0 )
-		limit = `LIMIT ${ skip }, ${ rows }`;
 
 	options?.sort && options.sort.forEach( ( opt: SortOptions ) => {
 		if ( opt.desc )
@@ -431,7 +429,11 @@ export const collection_find_all_dict = async ( db: Database, coll_name: string,
 	if ( _sort.length )
 		sort = `SORT ${ _sort.join( ', ' ) }`;
 
-	return await collection_find_all( db, `\n  FOR o IN ${ coll_name }\n    ${ filters } ${ sort } ${ limit }\n  RETURN o`, values, data_type, { count: options?.count } );
+	if ( rows > 0 )
+		limit = `LIMIT ${ skip }, ${ rows }`;
+
+
+	return await collection_find_all( db, `\n  FOR o IN ${ coll_name }\n  ${ sort } ${ filters } ${ limit } \n  RETURN o`, values, data_type, { count: options?.count } );
 };
 
 /**
