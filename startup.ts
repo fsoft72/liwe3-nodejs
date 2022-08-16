@@ -84,6 +84,16 @@ export const startup_kernel = async (): Promise<ILiWE> => {
 		cfg.app.languages = [ 'en' ];
 	}
 
+	if ( !cfg?.upload.sizes ) {
+		warn( "cfg.upload.sizes not defined" );
+		cfg.upload.sizes = {
+			thumb: 200,
+			small: 400,
+			medium: 800,
+			large: 1200,
+		};
+	}
+
 	liwe.cwd = path.join( __dirname, '../..' );
 
 	const db = await require( './db_init' ).db_init( cfg );
