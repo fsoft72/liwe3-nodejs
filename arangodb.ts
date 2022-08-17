@@ -401,6 +401,24 @@ interface CollectionFindAllOptions {
 }
 
 /**
+ * Counts the number of documents in a collection
+ *
+ * @param db          the database to query onto
+ * @param coll_name   the collection name
+ * @param data        the data to filter on (key/val)
+ * @param  data_type - if present, result list will be filtered before returning
+ * @param options	- A `CollectionFindAllOptions` object
+ */
+export const collection_count_dict = async ( db: Database, coll_name: string, data: any, data_type: any = undefined, options?: CollectionFindAllOptions ) => {  //rows = 0, skip = 0 ) => {
+	const [ filters, values ] = prepare_filters( 'o', data );
+
+	const count = await collection_count( db, `\n  FOR o IN  ${ coll_name }\n  ${ filters }\n  RETURN o`, values );
+
+	return count;
+};
+
+
+/**
  * returns a list of elements
  *
  * @param db          the database to query onto
