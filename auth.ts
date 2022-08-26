@@ -21,6 +21,7 @@ export const perm_available = ( user: MiniUserDetails, perms: string[] ): boolea
 	// Special permissions: is-logged means the user has is own uid
 	if ( perms.indexOf( "is-logged" ) !== -1 ) return true;
 
+	// If the user has no perms, return false
 	if ( !user.perms || !Object.keys( user.perms ).length ) return false;
 
 	// Special permissions: system.admin can always do everything
