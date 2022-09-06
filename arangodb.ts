@@ -351,7 +351,14 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 			switch ( mode ) {
 				case 'm':
 				case 'multi':
-					filters.push( `FILTER @${ k } IN ${ prefix }.${ name }` );
+					delete values[ k ];
+					const fields: string[] = val as any;
+
+					// convert fields in a string starting with "[" and ending with "]"
+					// and containing each element of the array separated by ","
+					const fields_str = JSON.stringify( fields );
+
+					filters.push( `FILTER ${ prefix }.${ name } IN ${ fields_str }` );
 					break;
 				case 'null':
 					filters.push( `FILTER ${ prefix }.${ name } == null` );
