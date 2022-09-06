@@ -314,6 +314,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 	const my_data = { ...data };
 	const values: any = { ...extra_values };
 	const filters: string[] = [];
+	const searchers: string[] = [];
 	const skip = my_data.skip || 0;
 	const rows = my_data.rows || -1;
 
@@ -339,7 +340,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 		} else if ( typeof ( val ) == 'object' ) {
 			mode = val.mode;
 			name = val.name || k;
-			val = val.val;
+			val = val.val || val.value;
 		} else {
 			name = k;
 		}
@@ -357,19 +358,11 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 					break;
 				case 'ft':
 				case 'fulltext':
+					delete values[ k ];
+					searchers.push( `SEARCH ANALYZER(LIKE(${ prefix }.${ name }, "%${ val }%") OR LIKE(${ prefix }.${ name }, "%${ val }%" ), "norm_it")` );
 					break;
 				case 'a':
 					delete values[ k ];
-					// console.log( "\n\n\n======= ", { prefix, name, val, mode } );
-
-					// FIXME: this is a MEGA PATCH  (tags search is different from other "IN" searches)
-					/*
-					if ( name != 'tags' ) {
-						if ( val.length ) {
-							filters.push( `FILTER ${ prefix }.${ name } IN ${ JSON.stringify( val ) }` );
-						}
-					} else {
-						*/
 					val.forEach( ( v: any ) => {
 						if ( !v?.length ) return;
 						filters.push( `FILTER '${ v }' IN ${ prefix }.${ k }` );
@@ -383,7 +376,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 		}
 	} );
 
-	return [ filters.join( '\n    ' ) + limit, values ];
+	return [ [ ...searchers, ...filters ].join( '\n    ' ) + limit, values ];
 };
 
 interface SortOptions {
