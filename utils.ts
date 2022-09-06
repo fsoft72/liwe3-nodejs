@@ -747,3 +747,32 @@ export const challenge_check = ( challenge: string, params: string[] ): boolean 
 	// console.log( "SENT MD5: %s - VALID: %s", challenge, ch );
 	return ch === challenge;
 };
+
+export const slugify = ( str: string ) => {
+	str = str.replace( /^\s+|\s+$/g, '' ); // trim
+	str = str.toLowerCase();
+
+	// list of characters group to be replaced
+	const groups = [
+		{ from: '[àáäâãåÀÁÄÂÃÅ]', to: 'a' },
+		{ from: '[èéëêÈÉËÊ]', to: 'e' },
+		{ from: '[ìíïîÌÍÏÎ]', to: 'i' },
+		{ from: '[òóöôõøÒÓÖÔÕØ]', to: 'o' },
+		{ from: '[ùúüûÙÚÜÛ]', to: 'u' },
+		{ from: '[ñÑ]', to: 'n' },
+		{ from: 'ç', to: 'c' },
+		{ from: 'ß', to: 'ss' },
+		// invalid chars
+		{ from: '[^a-z0-9 -]', to: '' },
+		// collapse whitespace and replace by -
+		{ from: '\\s+', to: '-' },
+		// collapse dashes
+		{ from: '-+', to: '-' },
+	];
+
+	groups.forEach( ( g ) => {
+		str = str.replace( new RegExp( g.from, 'g' ), g.to );
+	} );
+
+	return str;
+};
