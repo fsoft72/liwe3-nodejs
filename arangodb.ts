@@ -324,7 +324,7 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 	const limit = rows != -1 ? ` LIMIT ${ skip }, ${ rows }` : '';
 
 	Object.keys( my_data ).forEach( ( k: string ) => {
-		let name;
+		let name: string;
 		let mode = '==';
 		let val;
 
@@ -332,17 +332,17 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 		if ( data[ k ] === null ) return;
 
 		val = data[ k ];
+		name = k;
 
-		if ( Array.isArray( val ) ) {
-			mode = 'a';
-			name = k;
-			val = val.filter( ( v ) => v !== null && v !== undefined && v.length );
-		} else if ( typeof ( val ) == 'object' ) {
+		console.log( "\n\n====== CATEG: ", k, val );
+
+		if ( val.mode ) {
 			mode = val.mode;
-			name = val.name || k;
+			name = val.name || name;
 			val = val.val || val.value;
-		} else {
-			name = k;
+		} else if ( Array.isArray( val ) ) {
+			mode = 'a';
+			val = val.filter( ( v ) => v !== null && v !== undefined && v.length );
 		}
 
 		if ( val !== undefined || mode == 'null' ) {
@@ -372,13 +372,13 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 					delete values[ k ];
 					val.forEach( ( v: any ) => {
 						if ( !v?.length ) return;
-						filters.push( `FILTER '${ v }' IN ${ prefix }.${ k }` );
+						filters.push( `FILTER '${ v }' IN ${ prefix }.${ name }` );
 					} );
 					// }
 					break;
 
 				default:
-					filters.push( `FILTER ${ prefix }.${ name } ${ mode } @${ k }` );
+					filters.push( `FILTER ${ prefix }.${ name } ${ mode } @${ name }` );
 			}
 		}
 	} );
