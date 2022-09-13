@@ -334,8 +334,6 @@ export const prepare_filters = ( prefix: string, data: any, extra_values?: any )
 		val = data[ k ];
 		name = k;
 
-		console.log( "\n\n====== CATEG: ", k, val );
-
 		if ( val.mode ) {
 			mode = val.mode;
 			name = val.name || name;
