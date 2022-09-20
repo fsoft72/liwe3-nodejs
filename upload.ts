@@ -54,7 +54,7 @@ export const upload_info = ( req: ILRequest, field_name?: string, file?: any ): 
 	return {
 		path: file.path,
 		size: file.size,
-		type: mime.lookup( file.name ) as string,
+		type: mime.lookup( file.name ) as string || file.mimetype,
 		name: file.name,
 		ext: file.name.split( "." ).slice( -1 )[ 0 ],
 		md5: file.md5,  // fileUpload
