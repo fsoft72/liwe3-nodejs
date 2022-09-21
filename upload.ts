@@ -51,12 +51,16 @@ export const upload_info = ( req: ILRequest, field_name?: string, file?: any ): 
 	if ( field_name ) file = req.files[ field_name ];
 	if ( !file ) return null;
 
+	let ext = file.name.split( "." ).slice( -1 )[ 0 ];
+
+	if ( ext == 'blob' ) ext = mime.extension( file.mimetype );
+
 	return {
 		path: file.path,
 		size: file.size,
 		type: mime.lookup( file.name ) as string || file.mimetype,
 		name: file.name,
-		ext: file.name.split( "." ).slice( -1 )[ 0 ],
+		ext,
 		md5: file.md5,  // fileUpload
 		file: file
 	};
