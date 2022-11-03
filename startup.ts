@@ -213,7 +213,7 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 		abortOnLimit: true,
 		uriDecodeFileNames: true,
 		safeFileNames: true,
-		fileSize: liwe.cfg.server.max_post_size * 1024 * 1024,
+		// fileSize: liwe.cfg.server.max_post_size * 1024 * 1024,
 	} ) );
 
 	_defender( liwe.app, liwe.cfg );
