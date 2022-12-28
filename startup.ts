@@ -8,9 +8,10 @@ import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfi
 import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, module_fullpath, config_load } from './liwe';
 import Defender, { applySettings } from './defender';
 import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
-import { info, warn } from './console_colors';
+import { info, warn, colors } from './console_colors';
 // import { loc } from './locale';
 import * as fileUpload from 'express-fileupload';
+import { adb_init } from './db/arango';
 
 // import { SocketIORouter } from './socketio';
 
@@ -32,6 +33,14 @@ const _cors = ( app: ILApplication, cfg: ILiweConfig ) => {
 	};
 
 	app.use( cors( corsOptions ) );
+};
+
+const _db_init = async ( cfg: ILiweConfig ): Promise<any> => {
+	let init_db = null;
+
+	info( `DB Name: ${ colors.Yellow }${ cfg.database.dbname }${ colors.Reset } - Type: ${ colors.Yellow }${ cfg.database.type }${ colors.Reset } - TEST: ${ colors.Yellow }${ process.env.TEST_DB || 0 }${ colors.Reset } - EMPTY: ${ colors.Yellow }${ process.env.EMPTY_DB || 0 }${ colors.Reset }` );
+
+	return adb_init( cfg );
 };
 
 /** @ignore */
@@ -96,9 +105,7 @@ export const startup_kernel = async (): Promise<ILiWE> => {
 
 	liwe.cwd = path.join( __dirname, '../..' );
 
-	const db = await require( './db_init' ).db_init( cfg );
-
-	liwe.db = db;
+	liwe.db = await _db_init( cfg );  // require( './db_init' ).db_init( cfg );
 
 	return liwe;
 };
