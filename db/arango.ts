@@ -454,7 +454,9 @@ export const adb_prepare_filters = ( prefix: string, data: any, extra_values?: a
 				case 'ft':
 				case 'fulltext':
 					delete values[ k ];
-					searchers.push( `SEARCH ANALYZER(LIKE(${ prefix }.${ name }, "%${ val }%") OR LIKE(${ prefix }.${ name }, "%${ val }%" ), "norm_it")` );
+					if ( val ) {
+						searchers.push( `SEARCH ANALYZER(LIKE(${ prefix }.${ name }, "%${ val }%") OR LIKE(${ prefix }.${ name }, "%${ val }%" ), "norm_it")` );
+					}
 					break;
 				case 'a':
 					delete values[ k ];
