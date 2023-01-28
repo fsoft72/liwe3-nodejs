@@ -36,6 +36,11 @@ const _cors = ( app: ILApplication, cfg: ILiweConfig ) => {
 };
 
 const _db_init = async ( cfg: ILiweConfig ): Promise<any> => {
+	if ( cfg.database.disabled ) {
+		info( `DB: ${ colors.Yellow }disabled${ colors.Reset }` );
+		return null;
+	}
+
 	info( `DB Name: ${ colors.Yellow }${ cfg.database.dbname }${ colors.Reset } - Type: ${ colors.Yellow }${ cfg.database.type }${ colors.Reset } - TEST: ${ colors.Yellow }${ process.env.TEST_DB || 0 }${ colors.Reset } - EMPTY: ${ colors.Yellow }${ process.env.EMPTY_DB || 0 }${ colors.Reset }` );
 
 	return adb_init( cfg );

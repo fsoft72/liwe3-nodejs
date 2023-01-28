@@ -61,6 +61,8 @@ const _check_default_analyzers = async ( db: Database ) => {
 
 // gets a collection by its name, returns null if it does not exist
 const _collection_get = ( db: Database, coll_name: string, raise: boolean = true ): DocumentCollection => {
+	if ( !db ) return null;
+
 	const coll: DocumentCollection = db.collection( coll_name );
 
 	if ( !coll && raise ) throw ( new Error( `Collection ${ coll_name } does not exist` ) );
@@ -103,6 +105,9 @@ export const adb_init = async ( cfg: ILiweConfig ): Promise<Database> => {
  *
  */
 export const adb_db_create = async ( adb: Database, name: string ): Promise<Database> => {
+	console.log( "==== ADB: ", adb );
+	if ( !adb ) return null;
+
 	let db: Database;
 
 	// list all databases
@@ -156,6 +161,7 @@ export const adb_db_drop = async ( adb: Database, name: string ): Promise<boolea
  *
  */
 export const adb_collection_create = async ( db: Database, name: string, options: DBCollectionCreateOptions = null ): Promise<any> => {
+	if ( !db ) return null;
 	let coll;
 
 	if ( options?.drop ) {
@@ -203,6 +209,8 @@ export const adb_collection_drop = async ( db: Database, name: string ): Promise
  * @note - The update only works if the element has an _id field (the original Arango unique field)
  */
 export const adb_record_add = async ( db: Database, coll_name: string, data: any, data_type?: any ): Promise<any> => {
+	if ( !db ) return null;
+
 	let res: any;
 	let x: any;
 	const d = new Date();
@@ -258,6 +266,7 @@ export const adb_record_add_all = async ( db: Database, coll_name: string, data:
  * @param  options - Query options that change the behaviour of the query
  */
 export const adb_query_all = async ( db: Database, query: string, params: any = undefined, data_type: any = undefined, options?: QueryOptions ): Promise<any> => {
+	if ( !db ) return [];
 	if ( cfg.debug?.query_dump ) console.log( "AQL query: ", query, params );
 	if ( !params ) params = {};
 
@@ -327,6 +336,8 @@ export const adb_query_count = async ( db: Database, query: string, params: any 
  * @returns 		The collection
  */
 export const adb_collection_init = async ( db: Database, name: string, idx: DBCollectionIndex[] = null, options: DBCollectionCreateOptions = null ) => {
+	if ( !db ) return null;
+
 	const coll = await adb_collection_create( db, name, options );
 	const ft_fields: any = {};
 
