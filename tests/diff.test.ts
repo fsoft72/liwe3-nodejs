@@ -39,6 +39,45 @@ const obj2 = {
 	new: 'new',	// added
 };
 
+const validDelta = {
+	"job": {
+		"type": "update",
+		"differences": {
+			"company": {
+				"type": "update",
+				"value": "The Company Inc"
+			},
+			"section": {
+				"type": "update",
+				"differences": {
+					"name": {
+						"type": "update",
+						"value": "The Section 1"
+					},
+					"employees": {
+						"type": "update",
+						"differences": {
+							"3": {
+								"type": "add",
+								"value": "Jim"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"hobbies": {
+		"type": "delete"
+	},
+	"new": {
+		"type": "add",
+		"value": "new"
+	}
+};
+
+
+
 describe( 'diff and patch', () => {
 	let delta: any;
 	let obj3: any;
@@ -46,7 +85,7 @@ describe( 'diff and patch', () => {
 	it( 'should return the delta diff', () => {
 		// compare the two objects and create a differences object
 		delta = diff( obj1, obj2 );
-		console.log( JSON.stringify( delta, null, 2 ) );
+		expect( delta ).toEqual( validDelta );
 	} );
 
 	it( 'should apply the delta diff', () => {
