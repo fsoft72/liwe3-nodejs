@@ -37,7 +37,14 @@ export const config_load = ( fname: string = '', _default: any = {}, show_error:
 		return _default;
 	}
 
-	return require( name );
+	let cfg = fs.read( name );
+	// get current working directory
+	const cwd = fsname( '.' );
+
+	// replace all '$SERVER' entries with current working directory in cfg
+	cfg = cfg.replace( /\$SERVER/g, cwd );
+
+	return JSON.parse( cfg );
 };
 
 export const make_default_dirs = ( fullpath: string ): void => {

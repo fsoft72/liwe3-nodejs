@@ -265,6 +265,7 @@ export interface ILiweConfig {
 		dbname: string;
 		server: string;
 		port: number;
+		disabled?: boolean;
 	};
 
 	auth: {
