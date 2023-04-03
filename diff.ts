@@ -60,12 +60,12 @@ export const diff = ( oldObject: any, newObject: any ) => {
  * @param patch - the patch object
  * @returns the new object
  */
-export const patch = ( oldObject: any, patch: any ) => {
+export const patch = ( oldObject: any, diffData: any ) => {
 	var newObject = JSON.parse( JSON.stringify( oldObject ) );
-	var keys = Object.keys( patch );
+	var keys = Object.keys( diffData );
 
 	keys.forEach( ( key ) => {
-		var newValue = patch[ key ];
+		var newValue = diffData[ key ];
 		var keyNumber = Number( key );
 
 		// this is an array modification
