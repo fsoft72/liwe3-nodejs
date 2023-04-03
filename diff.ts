@@ -1,110 +1,99 @@
 /**
- * Recursively compares two objects and returns an object with the differences.
+ * diff (oldObject, newObject)
  *
- * @param {Object} obj1
- * @param {Object} obj2
+ * creates a diff object that can be used to update the oldObject to the newObject
  *
- * @returns {Object} Differences between the two objects.
+ * the patch object has the same structure as the newObject, but with the following differences:
+ * - fields that are equal in both objects are not present in the patch object
+ * - fields that are different in both objects are present in the patch object, with the newObject value
+ * - fields that are NOT present in the oldObject are present in the patch object
+ * - fields that are NOT present in the newObject are present in the patch object with the value null
+ *
+ * @param oldObject - the original object
+ * @param newObject - the new object
+ * @returns the patch object
  */
-export const diff = ( obj1: any, obj2: any ) => {
-	const differences: any = {};
-	for ( const key in obj1 ) {
-		if ( !obj2.hasOwnProperty( key ) ) {
-			differences[ key ] = { type: 'delete' };
-			continue;
-		}
-		if ( typeof obj1[ key ] === 'object' && typeof obj2[ key ] === 'object' ) {
-			const nestedDifferences = diff( obj1[ key ], obj2[ key ] );
-			if ( Object.keys( nestedDifferences ).length > 0 ) {
-				differences[ key ] = { type: 'update', differences: nestedDifferences };
-			}
-		} else if ( obj1[ key ] !== obj2[ key ] ) {
-			differences[ key ] = { type: 'update', value: obj2[ key ] };
-		}
-	}
-	for ( const key in obj2 ) {
-		if ( !obj1.hasOwnProperty( key ) ) {
-			differences[ key ] = { type: 'add', value: obj2[ key ] };
-		}
-	}
-	return differences;
-};
+export const diff = ( oldObject: any, newObject: any ) => {
+	var patch: any = {};
+	var keys = Object.keys( newObject );
 
-/**
- * Applies the differences to the first object and returns the new object.
- *
- * @param {Object} obj1
- * @param {Object} differences created by compareObjects()
- *
- * @returns {Object} New object with the differences applied.
- */
-export const patch = ( obj1: any, differences: any ) => {
-	const obj2 = JSON.parse( JSON.stringify( obj1 ) );
-	for ( const key in differences ) {
-		switch ( differences[ key ].type ) {
-			case 'add':
-				obj2[ key ] = differences[ key ].value;
-				break;
-			case 'update':
-				if ( typeof obj2[ key ] === 'object' ) {
-					obj2[ key ] = patch( obj2[ key ], differences[ key ].differences );
-				} else {
-					obj2[ key ] = differences[ key ].value;
-				}
-				break;
-			case 'delete':
-				delete obj2[ key ];
-				break;
+	keys.forEach( ( key ) => {
+		var oldValue = oldObject[ key ];
+		var newValue = newObject[ key ];
+
+		if ( oldValue === undefined ) {
+			patch[ key ] = newValue;
+		} else if ( newValue === undefined ) {
+			patch[ key ] = null;
+		} else if ( typeof newValue === 'object' ) {
+			var subPatch = diff( oldValue, newValue );
+			if ( Object.keys( subPatch ).length > 0 ) {
+				patch[ key ] = subPatch;
+			}
+		} else if ( oldValue !== newValue ) {
+			patch[ key ] = newValue;
 		}
-	}
-	return obj2;
-}
+	} );
+
+	// now scan oldObject keys and delete the ones that are not present in newObject
+	keys = Object.keys( oldObject );
+	keys.forEach( ( key ) => {
+		if ( newObject[ key ] === undefined ) {
+			patch[ key ] = null;
+		}
+	} );
+
+	return patch;
+};
 
 /*
-// TEST
-const obj1 = {
-	id: 1,
-	name: 'John Doe',
-	address: {
-		street: '123 Main St',
-		city: 'New York',
-		state: 'NY',
-	},
-	job: {
-		title: 'Developer',
-		company: 'Acme Inc',
-		section: {
-			name: 'Section 1',
-			employees: [ 'John', 'Jane', 'Bob' ],
-		}
-	},
-	hobbies: [ 'movies', 'music', { "hello": "me" } ],
-};
+ * applyDeepPatch(oldObject, patch)
+ *
+ * applies the patch to the oldObject, and returns the newObject
+ *
+ * starts from the patch object, and for each field:
+ * - if the field is not present in the oldObject, it is added
+ * - if the field is present in the oldObject, and it is an object, it is recursively patched
+ * - if the field key is a number, it is treated as an array index, and the oldObject is treated as an array
+ *
+ * @param oldObject - the original object
+ * @param patch - the patch object
+ * @returns the new object
+ */
+export const patch = ( oldObject: any, patch: any ) => {
+	var newObject = JSON.parse( JSON.stringify( oldObject ) );
+	var keys = Object.keys( patch );
 
-const obj2 = {
-	id: 1,
-	name: 'John Doe',
-	address: {
-		street: '123 Main St',
-		city: 'New York',
-		state: 'NY',
-	},
-	job: {
-		title: 'Developer',
-		company: 'The Company Inc',		// changed
-		section: {
-			name: 'The Section 1',		// changed
-			employees: [ 'John', 'Jane', 'Bob', 'Jim' ],  // added Jim
+	keys.forEach( ( key ) => {
+		var newValue = patch[ key ];
+		var keyNumber = Number( key );
+
+		// this is an array modification
+		if ( keyNumber >= 0 ) {
+			if ( keyNumber >= newObject.length ) {
+				newObject.push( newValue );
+			} else {
+				newObject[ keyNumber ] = patch( newObject[ keyNumber ], newValue );
+			}
+		} else {
+			// this is a key/value modification
+
+			if ( newValue === null ) {
+				delete newObject[ key ];
+				return;
+			}
+
+			if ( newObject[ key ] === undefined ) {
+				newObject[ key ] = newValue;
+				return;
+			}
+
+			if ( typeof newValue === 'object' ) {
+				newObject[ key ] = patch( newObject[ key ], newValue );
+			} else {
+				newObject[ key ] = newValue;
+			}
 		}
-	},
-	// hobbies: [ 'movies', 'music', { "hello": "me" } ],  // removed
-	new: 'new',	// added
+	} );
+	return newObject;
 };
-// compare the two objects and create a differences object
-const diff = diffObjects( obj1, obj2 );
-console.log( JSON.stringify( diff, null, 2 ) );
-// apply the differences to the first object and create a new object (that should be equal to obj2)
-const obj3 = applyDifferences( obj1, diff );
-// compare obj2 and obj3 to make sure they are equal
-console.log( "=== COMPARE: ", JSON.stringify( diffObjects( obj2, obj3 ), null, 2 ) );
-*/
