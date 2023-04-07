@@ -1,5 +1,5 @@
 import * as express from 'express';
-// import { SocketIORouter } from './socketio';
+import { SocketIORouter } from './socketio';
 
 /** MiniUserDetails */
 export interface MiniUserDetails {
@@ -96,7 +96,7 @@ export interface ILApplication extends express.Application {
 	db?: any;
 
 	/** Istance of the SocketIO Router */
-	// socket?: SocketIORouter;
+	socket?: SocketIORouter;
 }
 
 /** A simple redefinition of express.NextFunction */

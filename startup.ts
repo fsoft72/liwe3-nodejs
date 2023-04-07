@@ -13,7 +13,7 @@ import { info, warn, colors } from './console_colors';
 import * as fileUpload from 'express-fileupload';
 import { adb_init } from './db/arango';
 
-// import { SocketIORouter } from './socketio';
+import { SocketIORouter } from './socketio';
 
 const locale = ( liwe: ILiWE ) => {
 	const { loc, express_init } = require( './locale' );
@@ -119,7 +119,7 @@ export const startup_kernel = async (): Promise<ILiWE> => {
 const _socket_io_router = ( app: ILApplication, cfg: ILiweConfig ) => {
 	if ( !cfg.features.socketio ) return;
 
-	// app.socket = new SocketIORouter( cfg.features.socketio_debug );
+	app.socket = new SocketIORouter( cfg.features.socketio_debug );
 };
 
 /**
@@ -132,9 +132,8 @@ export const startup = async ( options: LiWEServerOptions = {} ): Promise<ILiWE>
 
 	if ( !liwe.cfg.warns ) liwe.cfg.warns = {};
 
-	// _socket_io_router( app, cfg );
-
 	liwe.app = express();
+	_socket_io_router( liwe.app, liwe.cfg );
 	// liwe.app = await _startup_server( liwe.cfg );
 
 	make_default_dirs( upload_fullpath( 'temp' ) );
@@ -293,7 +292,7 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 		console.log( `${ liwe.app_name } started on port: ${ liwe.port }.  http://localhost:${ liwe.port }` );
 	} );
 
-	// if ( liwe.app.socket ) liwe.app.socket.init( http );
+	if ( liwe.app.socket ) liwe.app.socket.init( http );
 
 	if ( liwe.cfg?.debug?.enabled ) console.log( '\n== App started in DEBUG MODE ==' );
 

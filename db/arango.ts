@@ -105,7 +105,6 @@ export const adb_init = async ( cfg: ILiweConfig ): Promise<Database> => {
  *
  */
 export const adb_db_create = async ( adb: Database, name: string ): Promise<Database> => {
-	console.log( "==== ADB: ", adb );
 	if ( !adb ) return null;
 
 	let db: Database;

@@ -3,6 +3,26 @@ import * as io from 'socket.io';
 import * as http from 'http';
 import { ILError } from './types';
 
+interface ServerToClientEvents {
+	broadcast: ( type: string, payload: any ) => void;
+	echo: ( type: string, payload: any ) => void;
+}
+
+interface ClientToServerEvents {
+	hello: ( type: string, payload: any ) => void;
+}
+
+interface InterServerEvents {
+	ping: () => void;
+}
+
+interface SocketData {
+	name: string;
+	payload: any;
+}
+
+
+
 /**
  * The ILiWESocketMessage defines the type of message handled by SocketIORouter
  * All the messages in LiWE Socket.IO implementation have the same signature
@@ -45,12 +65,10 @@ export class SocketIORouter {
 	 * @param port The Socket.IO listening port
 	 */
 	public init ( http: http.Server, port: number = 3001 ) {
-		/*
-		this.io = io(http);
-		this.io.on('connect', this.io_init);
-		*/
+		this.io = new io.Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>( port );
+		this.io.on( 'connect', this.io_init );
 
-		console.log( 'Socket.IO server started' );
+		console.log( '=======  Socket.IO server started' );
 	}
 
 	public listener_add ( name: string, cback: any ) {
