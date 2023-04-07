@@ -65,10 +65,16 @@ export class SocketIORouter {
 	 * @param port The Socket.IO listening port
 	 */
 	public init ( http: http.Server, port: number = 3001 ) {
-		this.io = new io.Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>( port );
+		this.io = new io.Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>( port, {
+			cors: {
+				origin: '*',
+				methods: [ 'GET', 'POST' ],
+			},
+		} );
+
 		this.io.on( 'connect', this.io_init );
 
-		console.log( '=======  Socket.IO server started' );
+		console.log( `=======  Socket.IO server started on port: ${ port }` );
 	}
 
 	public listener_add ( name: string, cback: any ) {
@@ -117,6 +123,7 @@ export class SocketIORouter {
 		} );
 
 		socket.on( 'liwe.msg', ( msg: ILiWESocketMessage ) => {
+			console.log( '===== LIWE MESSAGE: ', msg );
 			if ( this.debug ) console.log( 'LIWE MESSAGE: ', msg );
 			const act = this.events[ msg.action ];
 

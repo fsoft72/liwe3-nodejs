@@ -134,7 +134,6 @@ export const startup = async ( options: LiWEServerOptions = {} ): Promise<ILiWE>
 
 	liwe.app = express();
 	_socket_io_router( liwe.app, liwe.cfg );
-	// liwe.app = await _startup_server( liwe.cfg );
 
 	make_default_dirs( upload_fullpath( 'temp' ) );
 	make_default_dirs( temp_fullpath() );
@@ -292,7 +291,7 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 		console.log( `${ liwe.app_name } started on port: ${ liwe.port }.  http://localhost:${ liwe.port }` );
 	} );
 
-	if ( liwe.app.socket ) liwe.app.socket.init( http );
+	if ( liwe.app.socket ) liwe.app.socket.init( http, liwe.port + 1 );
 
 	if ( liwe.cfg?.debug?.enabled ) console.log( '\n== App started in DEBUG MODE ==' );
 
