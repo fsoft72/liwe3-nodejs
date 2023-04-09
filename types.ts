@@ -76,7 +76,7 @@ export interface ILRequest extends express.Request {
 	$l?: ( key: string, val: object, plural: boolean, module: string ) => string;
 
 	/** The instance of the SocketIORouter (if enabled) */
-	// socketio?: SocketIORouter;
+	socketio?: SocketIORouter;
 
 	fields?: any;
 

@@ -52,7 +52,7 @@ const augment_request = ( app: ILApplication, cfg: ILiweConfig, db: any ) => {
 		req.cfg = cfg;
 		req.db = db;
 		req.res = res;
-		// req.socketio = app.socket;
+		req.socketio = app.socket;
 		next();
 	} );
 };

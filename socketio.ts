@@ -65,7 +65,7 @@ export class SocketIORouter {
 	 * @param port The Socket.IO listening port
 	 */
 	public init ( http: http.Server, port: number = 3001 ) {
-		this.io = new io.Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>( port, {
+		this.io = new io.Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>( http, {
 			cors: {
 				origin: '*',
 				methods: [ 'GET', 'POST' ],
@@ -74,7 +74,7 @@ export class SocketIORouter {
 
 		this.io.on( 'connect', this.io_init );
 
-		console.log( `=======  Socket.IO server started on port: ${ port }` );
+		console.log( `=======  Socket.IO server started` );
 	}
 
 	public listener_add ( name: string, cback: any ) {
