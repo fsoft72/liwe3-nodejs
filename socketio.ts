@@ -113,6 +113,7 @@ export class SocketIORouter {
 	}
 
 	private io_init = ( socket: io.Socket ) => {
+		console.log( "=== CONNECT: ", socket.id );
 		socket.on( 'disconnect', () => {
 			console.log( 'DISCONNECT: ', socket.id );
 		} );
