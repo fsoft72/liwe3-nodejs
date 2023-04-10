@@ -234,6 +234,43 @@ export const adb_record_add = async ( db: Database, coll_name: string, data: any
 };
 
 /**
+ * Replaces an element in the collection
+ *
+ * @param db      	ArangoDB database
+ * @param coll_name	Name of the collection
+ * @param data    	Element data (key/val)
+ * @param data_type	If present, element is filtered before returning
+ *
+ * @note - The update only works if the element has an _id field (the original Arango unique field)
+ */
+export const adb_record_replace = async ( db: Database, coll_name: string, data: any, data_type?: any ): Promise<any> => {
+	if ( !db ) return null;
+
+	let res: any;
+	let x: any;
+	const d = new Date();
+	const coll = _collection_get( db, coll_name );
+
+	data.updated = d;
+	if ( data._id ) {
+		res = await coll.replace( data._id, data, { returnNew: true } );
+	} else {
+		data.created = d;
+		res = await coll.save( data, { returnNew: true } );
+	}
+
+	if ( res.new && res.new._key )
+		x = res.new;
+	else
+		x = res;
+
+	if ( data_type ) keys_filter( x, data_type );
+
+	return x;
+};
+
+
+/**
  * Adds / updates a list of elements in the collection
  *
  * @param coll    	The collection to add the element to
