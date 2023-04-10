@@ -151,5 +151,7 @@ export class SocketIORouter {
 		keys.forEach( ( k ) => {
 			socket.on( k, ( msg: any ) => this.listeners[ k ]( socket, msg ) );
 		} );
+
+		socket.emit( 'liwe.id', socket.id );
 	};
 }
