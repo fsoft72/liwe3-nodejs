@@ -113,9 +113,9 @@ export class SocketIORouter {
 	}
 
 	private io_init = ( socket: io.Socket ) => {
-		console.log( "=== CONNECT: ", socket.id );
+		if ( this.debug ) console.log( "=== CONNECT: ", socket.id );
 		socket.on( 'disconnect', () => {
-			console.log( 'DISCONNECT: ', socket.id );
+			console.log( '=== DISCONNECT: ', socket.id );
 		} );
 
 		socket.on( 'liwe.echo.raw', ( msg: string ) => {
@@ -124,7 +124,6 @@ export class SocketIORouter {
 		} );
 
 		socket.on( 'liwe.msg', ( msg: ILiWESocketMessage ) => {
-			console.log( '===== LIWE MESSAGE: ', msg );
 			if ( this.debug ) console.log( 'LIWE MESSAGE: ', msg );
 			const act = this.events[ msg.action ];
 
