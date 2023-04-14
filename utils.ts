@@ -776,3 +776,26 @@ export const slugify = ( str: string ) => {
 
 	return str;
 };
+
+const dec2base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+
+export const decimalToBase96 = ( decimal: number ): string => {
+	let result = "";
+	while ( decimal > 0 ) {
+		const remainder = decimal % 96;
+		result += dec2base64_chars.charAt( remainder );
+		decimal = Math.floor( decimal / 96 );
+	}
+	return result.split( "" ).reverse().join( "" );
+};
+
+export const base96ToDecimal = ( base96: string ): number => {
+	let decimal = 0;
+	for ( let i = base96.length - 1; i >= 0; i-- ) {
+		const char = base96.charAt( i );
+		const power = base96.length - 1 - i;
+		const value = dec2base64_chars.indexOf( char );
+		decimal += value * Math.pow( 96, power );
+	}
+	return decimal;
+};
