@@ -8,7 +8,7 @@ import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfi
 import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, module_fullpath, config_load } from './liwe';
 import Defender, { applySettings } from './defender';
 import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
-import { info, warn, colors } from './console_colors';
+import { info, warn, colors, error } from './console_colors';
 // import { loc } from './locale';
 import * as fileUpload from 'express-fileupload';
 import { adb_init } from './db/arango';
@@ -232,6 +232,11 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 
 	liwe.app.use( bodyParser.json() );
 	liwe.app.use( bodyParser.urlencoded( { extended: true } ) );
+
+	if ( !liwe.cfg?.security?.remote ) {
+		error( "cfg.security.remote not defined" );
+		if ( liwe.cfg?.server?.block_on_errors ) process.exit( 1 );
+	}
 
 	// This line parses JSON requests
 	//liwe.app.use( express.json( { limit: '25mb' } ) );   // liwe.cfg.server.max_post_size } ) );
