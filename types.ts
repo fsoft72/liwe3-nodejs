@@ -36,6 +36,9 @@ export interface LiWEServerOptions {
 
 	/** Not used yet */
 	log?: boolean;
+
+	/** Extra Middlewares */
+	middlewares?: any[];
 }
 
 /** The standard LiWE Callback for functions. */

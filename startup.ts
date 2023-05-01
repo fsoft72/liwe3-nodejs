@@ -250,6 +250,11 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 		} );
 	}
 
+	// Add extra middlewares (if any)
+	if ( options?.middlewares ) {
+		options.middlewares.forEach( ( m ) => liwe.app.use( m ) );
+	}
+
 	// =======================================================
 	// SITE ENDPOINTS
 	// =======================================================
