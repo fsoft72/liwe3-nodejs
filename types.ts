@@ -195,6 +195,9 @@ export interface ILiweConfig {
 		public_dir: string;
 		max_post_size: number;
 		dump_ip: boolean;
+
+		/** If T, the server will block on errors */
+		block_on_errors: boolean;
 	};
 
 	/** The TUS server for file uploads */
