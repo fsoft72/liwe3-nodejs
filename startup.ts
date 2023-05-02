@@ -14,6 +14,7 @@ import * as fileUpload from 'express-fileupload';
 import { adb_init } from './db/arango';
 
 import { SocketIORouter } from './socketio';
+import { mkid } from './utils';
 
 const locale = ( liwe: ILiWE ) => {
 	const { loc, express_init } = require( './locale' );
@@ -104,6 +105,11 @@ export const startup_kernel = async (): Promise<ILiWE> => {
 			medium: 800,
 			large: 1200,
 		};
+	}
+
+	if ( !cfg.debug.challenge ) {
+		warn( "cfg.debug.challenge not defined" );
+		cfg.debug.challenge = mkid( 'challenge' );
 	}
 
 	liwe.cwd = path.join( __dirname, '../..' );

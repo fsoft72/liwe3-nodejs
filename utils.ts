@@ -742,6 +742,8 @@ export const challenge_create = ( params: string[] ) => {
  * @returns true if the challenge is valid
  */
 export const challenge_check = ( challenge: string, params: string[] ): boolean => {
+	if ( cfg.debug.enabled && challenge == cfg.debug.challenge ) return true;
+
 	const ch = challenge_create( params );
 
 	// console.log( "SENT MD5: %s - VALID: %s", challenge, ch );

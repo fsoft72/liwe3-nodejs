@@ -182,6 +182,9 @@ export interface ILiweConfig {
 
 		/** If T, auth perms are dumped on console */
 		auth_dump: boolean;
+
+		/** Unique debug challenge code - used when debug is enabled and you cannot use the standard challenge */
+		challenge?: string;
 	};
 
 	/** The server configuration section */
