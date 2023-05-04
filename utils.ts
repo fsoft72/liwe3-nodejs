@@ -215,42 +215,6 @@ export const fetch_file = ( url: string, dest_local_path: string ) => {
 	request( url ).pipe( fs.createWriteStream( dest_local_path ) );
 };
 
-/**
- * Decrypts a message received in the req.body field
- * and returns the message as Object
- * This function uses [[payload_decrypt]]()
- *
- * @param req   The ILRequest object
- * @returns an Object with decrypted data
- * @see [[payload_decrypt]]
- */
-export const message_decrypt = ( req: ILRequest ) => {
-	const { q } = req.body;
-	const msg = payload_decrypt( q, req.cfg.security.secret );
-
-	delete msg.exp;
-	delete msg.iat;
-
-	return msg;
-};
-
-/**
- * Encrypt a message and sends it back to the server with ILResponse
- *
- * @param res  the ILResponse to send the answer to
- * @param payload the object to be encrypted
- */
-export const message_send_encrypted = ( res: ILResponse, payload: any ) => {
-	const q = payload_crypt( payload, cfg.security.secret, 5 );
-	res.send( { q } );
-};
-
-export const payload_crypt = ( payload: string, secret: string, expires: number ): string => {
-	const s = jwt.sign( payload, secret, { expiresIn: expires } );
-
-	return s;
-};
-
 export const jwt_crypt = ( payload: any, secret: string, expires: number ): string => {
 	return jwt.sign( { payload }, secret, { expiresIn: expires } );
 };
@@ -262,38 +226,6 @@ export const jwt_decrypt = ( tok: string, secret: string ): any => {
 	} catch ( e ) {
 		return null;
 	}
-};
-
-/**
- * Decrypts a message
- *
- * @param crypted  The encrypted string to decrypt
- * @param secret   The secret salt
- */
-export const payload_decrypt = ( crypted: string, secret: string ): any => {
-	try {
-		const payload = jwt.verify( crypted, secret );
-		return payload;
-	} catch ( e ) {
-		return { message: 'expired' };
-	}
-};
-
-export const crypt_send_message = ( url: string, payload: any, secret: string, expires: number, cback: LCback ) => {
-	const axios = require( "axios" );
-	const crypted = payload_crypt( payload, secret, expires );
-
-	axios.post( url, { q: crypted } )
-		.then( ( resp: any ) => {
-			const res = payload_decrypt( resp.data.q, secret );
-			delete res.iat;
-			delete res.exp;
-			return cback( null, res );
-		} )
-
-		.catch( ( err: any ) => {
-			return cback( err );
-		} );
 };
 
 export const delete_folder = ( path: string ): void => {
