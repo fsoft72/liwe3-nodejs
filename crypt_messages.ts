@@ -5,6 +5,8 @@ import * as jwt from 'jsonwebtoken';
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
 import * as crypto from 'crypto';
+import { challenge_create } from './utils';
+import { error } from './console_colors';
 
 // Encrypts the given payload using the provided secret message
 export const cryptPayload = ( payload: any ): string => {
@@ -57,6 +59,51 @@ export const decryptPayload = ( encryptedPayload: string ): any | null => {
 		console.error( 'Decryption failed:', err );
 		return null; // Decryption failed
 	}
+};
+
+type CryptedMessage = {
+	cryptedBlock: string;
+	challenge: string;
+};
+
+export const cryptMessage = ( payload: any ): CryptedMessage => {
+	const cryptedBlock = cryptPayload( payload );
+	const challenge = challenge_create( [ cryptedBlock ] );
+
+	return { cryptedBlock, challenge };
+};
+
+export const cryptSend = async ( fullURL: string, payload: any ): Promise<any> => {
+	// send data to the blockchain server in a POST request using fetch
+	const response = await fetch( fullURL, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify( cryptMessage( payload ) ),
+	} );
+
+	const json = await response.json();
+
+	if ( json.error ) {
+		error( 'cryptSend error:', json.error );
+		return null;
+	}
+
+	return decryptMessage( json );
+};
+
+export const decryptMessage = ( cryptedMessage: CryptedMessage ): any | null => {
+	const { cryptedBlock, challenge } = cryptedMessage;
+	const check_challenge = challenge_create( [ cryptedBlock ] );
+
+	if ( check_challenge !== challenge ) {
+		error( 'decryptMessage error: challenge mismatch' );
+		return null;
+	}
+
+	const payload = decryptPayload( cryptedBlock );
+	return payload;
 };
 
 
