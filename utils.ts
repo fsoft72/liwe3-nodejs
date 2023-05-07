@@ -657,7 +657,8 @@ export const list_random_pick_n = ( lst: any[], n: number ) => {
  * takes a list of strings and returns a valid challenge
  */
 export const challenge_create = ( params: string[] ) => {
-	const s: string[] = params.map( ( p ) => p?.toString().toLowerCase() ).sort();
+	const s: string[] = params.map( ( p ) => ( p || '' )?.toString().toLowerCase() );
+	s.sort();
 	s.push( cfg.security.remote );
 
 	// console.log( "----- SERVER CHALLENGE: ", s.join( '-' ) );
