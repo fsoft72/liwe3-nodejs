@@ -154,7 +154,7 @@ export const unique_code = ( simple: boolean = true, prefix: string = null, seco
 	else
 		prefix = '';
 
-	let c = `${ prefix }${ n.toString( 36 ) }`;
+	let c = `${ prefix }${ md5( n.toString( 36 ) ) }`;
 
 	if ( simple && !second_slice ) return c;
 
