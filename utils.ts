@@ -661,10 +661,16 @@ export const challenge_create = ( params: string[], debug = false ) => {
 	s.sort();
 	s.push( cfg.security.remote );
 
-	if ( debug )
-		console.log( "=== Server Challenge: ", s.join( '-' ) );
+	let ckey = s.join( '-' );
 
-	return md5( s.join( '-' ) );
+	// remove all starting '-' characters
+	while ( ckey[ 0 ] == '-' ) ckey = ckey.substring( 1 );
+
+
+	if ( debug )
+		console.log( "=== Server Challenge: ", ckey );
+
+	return md5( ckey );
 };
 
 /**
