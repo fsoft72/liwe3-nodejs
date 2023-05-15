@@ -1,6 +1,5 @@
 import { config_load } from './liwe';
-import { ILRequest, ILResponse, ILiweConfig, LCback } from './types';
-import * as jwt from 'jsonwebtoken';
+import { ILiweConfig } from './types';
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
@@ -104,31 +103,4 @@ export const decryptMessage = ( cryptedMessage: CryptedMessage ): any | null => 
 
 	const payload = decryptPayload( cryptedBlock );
 	return payload;
-};
-
-
-/**
- * Encrypt a message and sends it back to the server with ILResponse
- *
- * @param res  the ILResponse to send the answer to
- * @param payload the object to be encrypted
- */
-export const message_send_encrypted = ( res: ILResponse, payload: any ) => {
-	const q = cryptPayload( payload );
-	res.send( { q } );
-};
-
-export const crypt_send_message = ( url: string, payload: any, secret: string, expires: number, cback: LCback ) => {
-	const axios = require( "axios" );
-	const crypted = cryptPayload( payload );
-
-	axios.post( url, { q: crypted } )
-		.then( ( resp: any ) => {
-			const res = decryptPayload( resp.data.q );
-			return cback( null, res );
-		} )
-
-		.catch( ( err: any ) => {
-			return cback( err );
-		} );
 };
