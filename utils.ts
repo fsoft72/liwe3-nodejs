@@ -656,14 +656,21 @@ export const list_random_pick_n = ( lst: any[], n: number ) => {
 /**
  * takes a list of strings and returns a valid challenge
  */
-export const challenge_create = ( params: string[] ) => {
+export const challenge_create = ( params: string[], debug = false ) => {
 	const s: string[] = params.map( ( p ) => ( p || '' )?.toString().toLowerCase() );
 	s.sort();
 	s.push( cfg.security.remote );
 
-	// console.log( "----- SERVER CHALLENGE: ", s.join( '-' ) );
+	let ckey = s.join( '-' );
 
-	return md5( s.join( '-' ) );
+	// remove all starting '-' characters
+	while ( ckey[ 0 ] == '-' ) ckey = ckey.substring( 1 );
+
+
+	if ( debug )
+		console.log( "=== Server Challenge: ", ckey );
+
+	return md5( ckey );
 };
 
 /**
@@ -733,4 +740,28 @@ export const base96ToDecimal = ( base96: string ): number => {
 		decimal += value * Math.pow( 96, power );
 	}
 	return decimal;
+};
+
+export const formatCurrency = ( number: number, { thousandSeparator = '.', decimalSeparator = ',' } = {} ): string => {
+	// if number is a string, convert to float
+	if ( typeof number === 'string' ) {
+		number = parseFloat( number );
+	}
+
+	let buffer = '';
+	let parts = number.toFixed( 2 ).split( '.' );
+	let integerPart = parts[ 0 ];
+	let decimalPart = parts[ 1 ];
+
+	for ( let i = 0; i < integerPart.length; i++ ) {
+		if ( i > 0 && ( integerPart.length - i ) % 3 === 0 ) {
+			buffer += thousandSeparator;
+		}
+		buffer += integerPart[ i ];
+	}
+
+	buffer += decimalSeparator;
+	buffer += decimalPart;
+
+	return buffer;
 };
