@@ -17,7 +17,7 @@ const cfg: ILiweConfig = config_load( 'data', {}, true, true );
  * @param from sender email
  * @param cback the cback to be called
  */
-export const send_mail = async ( subject: string, text: string, html: string, to: string, from: string, reply_to: string, cback: LCback ) => {
+export const send_mail = async ( subject: string, text: string, html: string, to: string, from: string, reply_to: string, cback: LCback = null ) => {
 	const { protocol, login, password, server, send_for_real, dump_on_console, port } = cfg.smtp;
 
 	if ( !from ) from = login;
@@ -25,7 +25,7 @@ export const send_mail = async ( subject: string, text: string, html: string, to
 
 	// Specify the fields in the email.
 	const mailOptions = {
-		from: from,
+		from,
 		to,
 		subject,
 		reply_to,
