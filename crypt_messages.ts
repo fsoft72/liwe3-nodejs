@@ -1,3 +1,7 @@
+import { default as fetch } from 'node-fetch';
+
+
+
 import { config_load } from './liwe';
 import { ILiweConfig } from './types';
 
@@ -82,7 +86,7 @@ export const cryptSend = async ( fullURL: string, payload: any ): Promise<any> =
 		body: JSON.stringify( cryptMessage( payload ) ),
 	} );
 
-	const json = await response.json();
+	const json: any = await response.json();
 
 	if ( json.error ) {
 		error( 'cryptSend error:', json.error );
