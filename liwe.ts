@@ -1,4 +1,4 @@
-import { warn } from './console_colors';
+import { error, warn } from './console_colors';
 import * as fs from './fs';
 
 export const fsname = ( path: string ): string => {
@@ -31,7 +31,7 @@ export const config_load = ( fname: string = '', _default: any = {}, show_error:
 	if ( !fs.exists( name ) ) name = fsname( `${ path }/${ fname }.js` );
 
 	if ( !fs.exists( name ) ) {
-		if ( show_error ) warn( 'ERROR: config not found: ', name );
+		if ( show_error ) error( 'ERROR: config not found: ', name );
 
 		if ( raise_exception ) throw new Error( 'ERROR: config not found: ' + name );
 
