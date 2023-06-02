@@ -166,6 +166,28 @@ export const unique_code = ( simple: boolean = true, prefix: string = null, seco
 };
 
 /**
+ * Generates a unique code number string based on the current timestamp.
+ *
+ * @param {number} length - The length of the code number string to generate.
+ * @param {number} [second_slice=0] - The length of the second slice to append to the code number string.
+ * @returns {string} - The unique code number string.
+ */
+export const unique_code_numbers = ( length: number, second_slice: number = 0 ): string => {
+	const now = new Date();
+	const n = now.getTime(); //  + now.getMilliseconds();
+
+	// get the latest length digits of the string
+	let c = n.toString().slice( -length );
+
+	if ( !second_slice ) return c;
+
+	const m = now.getTime() + now.getMilliseconds();
+
+	// get the latest length digits of the string
+	return `${ c }.${ m.toString().slice( -second_slice ) }`;
+};
+
+/**
  * @description This function returns an unique id, the id starts with the prefix and can optionally contain an extension
  * @param prefix - The prefix to add to the string
  * @param ext - The extension to add to the string
