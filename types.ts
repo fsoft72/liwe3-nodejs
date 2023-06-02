@@ -304,6 +304,7 @@ export interface ILiweConfig {
 		auto_enabled: boolean;
 		auth_code_length: number;
 		auth_code_forced: string | boolean;
+		auth_code_numbers: boolean;
 		auth_code_debug: boolean;
 		activate_and_login: boolean;
 		jwt_dump: boolean;
