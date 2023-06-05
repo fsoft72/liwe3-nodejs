@@ -5,6 +5,8 @@ import { ILRequest, ILResponse } from "./types";
 const _ip_re = /((\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5])))/;
 
 const real_ip = ( ipAddr: string ) => {
+	if ( ipAddr == '::1' ) return '127.0.0.1';
+	console.log( "=== Defender: real_ip: ", ipAddr );
 	const g = ipAddr.match( _ip_re );
 
 	return g[ 1 ];
