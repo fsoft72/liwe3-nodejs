@@ -14,6 +14,10 @@ const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 export interface QueryOptions {
 	/** If T, the query will return also the count of documents */
 	count?: boolean;
+	/** The pagination starting point */
+	skip?: number;
+	/** The number of documents to return */
+	rows?: number;
 }
 
 export interface DBCollectionIndex {
@@ -303,6 +307,19 @@ export const adb_record_add_all = async ( db: Database, coll_name: string, data:
  */
 export const adb_query_all = async ( db: Database, query: string, params: any = undefined, data_type: any = undefined, options?: QueryOptions ): Promise<any> => {
 	if ( !db ) return [];
+
+	if ( options?.skip || options?.rows ) {
+		// We have to modify the query so that it returns the correct number of rows
+		const skip = options.skip || 0;
+		const rows = options.rows || 25;
+
+		// Before the RETURN statement, we add a LIMIT/SKIP statement
+		const i = query.indexOf( "RETURN" );
+		if ( i > 0 ) {
+			query = query.slice( 0, i ) + `LIMIT ${ skip }, ${ rows }\n` + query.slice( i );
+		}
+	}
+
 	if ( cfg.debug?.query_dump ) console.log( "AQL query: ", query, params );
 	if ( !params ) params = {};
 
