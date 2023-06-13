@@ -50,18 +50,43 @@ export const colors = {
 	bg_White: "\x1b[47m",
 };
 
+/**
+ * Logs a warning message to the console.
+ * The message is prefixed with a yellow WARN label in magenta background.
+ *
+ * @param {...any} args - The arguments to log to the console.
+ * @returns {void}
+ */
 export const warn = ( ...args: any ) => {
 	console.warn( colors.Magenta + colors.bg_Yellow + "  WARN  " + colors.Reset, ...args );
 };
 
+/**
+ * Logs an info message to the console.
+ * The message is prefixed with a blue INFO label in cyan background.
+ *  
+ * @param {...any} args - The arguments to log to the console.
+ */
 export const info = ( ...args: any ) => {
 	console.log( colors.White + colors.bg_Blue + "  INFO  " + colors.Reset, ...args );
 };
 
+/**
+ * Logs an error message to the console.
+ * The message is prefixed with a red ERR label in white background.
+ * 
+ * @param {...any} args - The arguments to log to the console.
+ */
 export const error = ( ...args: any ) => {
 	console.log( colors.White + colors.bg_Red + "  ERR   " + colors.Reset, ...args );
 };
 
+/**
+ * Logs a critical error message to the console.
+ * The message is completely written in white on red background.
+ * 
+ * @param {...any} args - The arguments to log to the console.
+ */
 export const critical = ( ...args: any ) => {
 	console.error( colors.White + colors.bg_Red, ...args, colors.Reset );
 };
