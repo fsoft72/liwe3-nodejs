@@ -1,6 +1,13 @@
 import { error, warn } from './console_colors';
 import * as fs from './fs';
+import { ILiweConfig } from './types';
 
+/**
+ * Returns the absolute path of a file or directory.
+ *
+ * @param {string} path - The path to the file or directory.
+ * @returns {string} The absolute path of the file or directory.
+ */
 export const fsname = ( path: string ): string => {
 	if ( !path.startsWith( '.' ) ) return fs.abspath( './' + path );
 
@@ -25,6 +32,16 @@ export const relative_fullpath = ( fullpath: string = '' ): string => {
 
 export const public_relative_path = ( full_path: string = '' ): string => full_path.split( "/static/public" ).slice( -1 )[ 0 ];
 
+/**
+ * Loads a configuration file from the specified path.
+ *
+ * @param {string} [fname=''] - The name of the configuration file to load.
+ * @param {*} [_default={}] - The default value to return if the configuration file is not found.
+ * @param {boolean} [show_error=false] - Whether to log an error message to the console if the configuration file is not found.
+ * @param {boolean} [raise_exception=false] - Whether to throw an exception if the configuration file is not found.
+ * @param {string} [path='etc/config'] - The path to the directory containing the configuration files.
+ * @returns {*} The parsed configuration object.
+ */
 export const config_load = ( fname: string = '', _default: any = {}, show_error: boolean = false, raise_exception: boolean = false, path: string = 'etc/config' ): any => {
 	let name = fsname( `${ path }/${ fname }.json` );
 
