@@ -23,6 +23,35 @@ export const exists = ( path: string ): boolean => {
 };
 
 /**
+ * Checks if a path is a file.
+ *
+ * @param path the path to check
+ * @returns true if the path is a file
+ */
+export const isFile = ( path: string ): boolean => {
+	try {
+		return fs.statSync( path ).isFile();
+	} catch ( e ) {
+		return false;
+	}
+};
+
+/**
+ * Checks if a path is a directory.
+ *
+ * @param path the path to check
+ * @returns true if the path is a directory
+ */
+export const isDirectory = ( path: string ): boolean => {
+	try {
+		return fs.statSync( path ).isDirectory();
+	} catch ( e ) {
+		return false;
+	}
+};
+
+
+/**
  * mkdir - creates a new directory
  *
  * @param dirname - directory name to be created
@@ -104,12 +133,12 @@ export const rename = ( old_path: string, new_path: string ): void => {
  * move ( old_path, new_path ) => void
  *
  * Moves a file from ``old_path`` to ``new_path``.
- * 
+ *
  * This function first tries using `rename` function. If it cannot be used, then the file is copied and removed.
  *
  * @param old_path:  original file name to move
  * @param new_path:  destination file name
- * 
+ *
  * @see rename
  */
 export const move = ( old_path: string, new_path: string ): boolean => {
