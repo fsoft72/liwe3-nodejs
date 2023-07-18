@@ -294,13 +294,18 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 		const url = req.originalUrl.replace( '/static/public', '' );
 		let fname = public_fullpath( url );
 
-		// remove query string
-		fname = fname.split( '&' )[ 0 ];
+		console.log( "=== URL: ", req.originalUrl, fname );
 
-		if ( fs.exists( fname ) ) return res.sendFile( fname );
+		// remove query string
+		fname = fname.split( '?' )[ 0 ];
+
+		if ( fs.isFile( fname ) ) return res.sendFile( fname );
+		if ( fs.isFile( `${ fname }/index.html` ) ) return res.sendFile( `${ fname }/index.html` );
 
 		console.error( 'MISSING URL: ', req.originalUrl, url, fname );
-		res.sendFile( public_fullpath( 'index.html' ) );
+
+		return res.status( 404 ).send( 'Not found' );
+		// res.sendFile( public_fullpath( 'index.html' ) );
 	} );
 
 	const http = liwe.app.listen( liwe.port, () => {
