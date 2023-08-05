@@ -3,7 +3,7 @@
 // import { ILApplication } from './types';
 import { Database } from 'arangojs';
 import { ILiweConfig } from '../types';
-import { critical } from '../console_colors';
+import { critical, error } from '../console_colors';
 import { DocumentCollection } from "arangojs/collection";
 
 import { config_load } from "../liwe";
@@ -323,18 +323,23 @@ export const adb_query_all = async ( db: Database, query: string, params: any = 
 	if ( cfg.debug?.query_dump ) console.log( "AQL query: ", query, params );
 	if ( !params ) params = {};
 
-	const data: any = await db.query( query, params );
-	const res: any[] = await data.all();
+	try {
+		const data: any = await db.query( query, params );
+		const res: any[] = await data.all();
 
-	if ( data_type ) res.forEach( ( el ) => keys_filter( el, data_type ) );
+		if ( data_type ) res.forEach( ( el ) => keys_filter( el, data_type ) );
 
-	if ( options?.count ) {
-		const count = await adb_query_count( db, query, params );
+		if ( options?.count ) {
+			const count = await adb_query_count( db, query, params );
 
-		res.forEach( ( el ) => el.__count = count );
+			res.forEach( ( el ) => el.__count = count );
+		}
+
+		return res;
+	} catch ( e ) {
+		error( e.message );
+		return [];
 	}
-
-	return res;
 };
 
 /**
