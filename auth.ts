@@ -35,10 +35,10 @@ export const perm_available = ( user: MiniUserDetails, perms: string[] ): boolea
 		const spl = p.split( "." );
 		const mod = user.perms[ spl[ 0 ] ] || [];
 
-		if ( mod.indexOf( 'admin' ) > -1 )
+		if ( mod.indexOf( `${ spl[ 0 ] }.admin` ) > -1 )
 			authorized = true;
 		else
-			authorized = ( mod.indexOf( spl[ 1 ] ) > -1 );
+			authorized = ( mod.indexOf( `${ spl[ 0 ] }.${ spl[ 1 ] }` ) > -1 );
 	} );
 
 	if ( cfg.debug?.auth_dump )
