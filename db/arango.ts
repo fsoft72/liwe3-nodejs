@@ -641,14 +641,18 @@ export const adb_del_one = async ( db: Database, coll_name: string, data: any ) 
  * @param coll_name   the collection name
  * @param data        the data to filter on (key/val)
  *
- * @returns nothing
+ * @returns a list of removed elements ids
  */
 export const adb_del_all = async ( db: Database, coll_name: string, data: any ) => {
 	const r: any[] = await adb_find_all( db, coll_name, data );
-	if ( !r?.length ) return;
+	if ( !r?.length ) return [];
 
 	const coll: DocumentCollection = db.collection( coll_name );
-	if ( !coll ) return;
+	if ( !coll ) return [];
+
+	const ids: string[] = r.map( ( el ) => el.id );
 
 	await Promise.all( r.map( ( el ) => coll.remove( el._id ) ) );
+
+	return ids;
 };
