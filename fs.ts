@@ -164,7 +164,7 @@ export const move = ( old_path: string, new_path: string ): boolean => {
  * @param {string} data - The data to write to the file.
  * @returns {void}
  */
-export const write = ( full_path: string, data: string ): void => {
+export const write = ( full_path: string, data: string | Buffer ): void => {
 	return fs.writeFileSync( full_path, data );
 };
 
@@ -220,4 +220,8 @@ export const tmp_file = ( path: string, name: string = '', mode = 0o600 ) => {
  */
 export const symlink = ( src: string, dest: string ): void => {
 	fs.symlinkSync( src, dest );
+};
+
+export const createWriteStream = ( path: string, options: any ) => {
+	return fs.createWriteStream( path, options );
 };

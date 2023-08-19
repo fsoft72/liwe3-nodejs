@@ -26,5 +26,9 @@ export const ext = ( str: string ) => {
 };
 
 export const ext2mime = ( ext: string ) => {
-	return mime.lookup( ext );
+	let res = mime.lookup( ext );
+
+	if ( res ) return res;
+
+	return "application/octet-stream";
 };
