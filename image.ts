@@ -58,6 +58,7 @@ export const mk_thumb = async ( src_path: string, dest_path: string, width: numb
 		case 'jpeg':
 		case 'png':
 		case 'webp':
+		case 'gif':
 			await resize( src_path, dest_path, width, height, options, cback );
 			break;
 
