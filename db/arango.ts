@@ -508,6 +508,7 @@ export const adb_prepare_filters = ( prefix: string, data: any, extra_values?: a
 			switch ( mode ) {
 				case 'm':
 				case 'multi':
+				case 'in':
 					delete values[ k ];
 					const fields: string[] = val as any;
 
@@ -647,12 +648,16 @@ export const adb_del_all = async ( db: Database, coll_name: string, data: any ) 
 	const r: any[] = await adb_find_all( db, coll_name, data );
 	if ( !r?.length ) return [];
 
+	return await adb_del_all_raw( db, coll_name, r );
+};
+
+export const adb_del_all_raw = async ( db: Database, coll_name: string, elems: any[] ) => {
 	const coll: DocumentCollection = db.collection( coll_name );
 	if ( !coll ) return [];
 
-	const ids: string[] = r.map( ( el ) => el.id );
+	const ids: string[] = elems.map( ( el ) => el.id );
 
-	await Promise.all( r.map( ( el ) => coll.remove( el._id ) ) );
+	await Promise.all( elems.map( ( el ) => coll.remove( el._id ) ) );
 
 	return ids;
 };
