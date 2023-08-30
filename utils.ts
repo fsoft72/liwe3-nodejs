@@ -476,11 +476,13 @@ export const isValidDate = ( d: any ) => {
 */
 
 export const int = ( s: any ): number => {
+	if ( !s ) return 0;
 	if ( typeof ( s ) === 'undefined' ) s = "0";
 	return parseInt( s.toString(), 10 );
 };
 
 export const float = ( s: any ): number => {
+	if ( !s ) return 0.0;
 	return parseFloat( s.toString() );
 };
 
@@ -768,6 +770,7 @@ export const base96ToDecimal = ( base96: string ): number => {
 
 export const formatCurrency = ( number: number, { thousandSeparator = '.', decimalSeparator = ',' } = {} ): string => {
 	// if number is a string, convert to float
+	if ( !number ) return '';
 	if ( typeof number === 'string' ) {
 		number = parseFloat( number );
 	}
