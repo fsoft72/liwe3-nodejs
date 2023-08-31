@@ -59,7 +59,9 @@ export const mk_thumb = async ( src_path: string, dest_path: string, width: numb
 		case 'png':
 		case 'webp':
 		case 'gif':
-			await resize( src_path, dest_path, width, height, options, cback );
+			// await resize( src_path, dest_path, width, height, options, cback );
+			cmd = `convert "${ src_path }" -thumbnail ${ n }x${ n } "${ dest_path }"`;
+			await shell( cmd, cback );
 			break;
 
 		case 'pdf':
