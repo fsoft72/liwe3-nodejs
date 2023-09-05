@@ -220,11 +220,16 @@ export const adb_record_add = async ( db: Database, coll_name: string, data: any
 	const coll = _collection_get( db, coll_name );
 
 	data.updated = d;
-	if ( data._id ) {
-		res = await coll.update( data._id, data, { returnNew: true } );
-	} else {
-		data.created = d;
-		res = await coll.save( data, { returnNew: true } );
+	try {
+		if ( data._id ) {
+			res = await coll.update( data._id, data, { returnNew: true } );
+		} else {
+			data.created = d;
+			res = await coll.save( data, { returnNew: true } );
+		}
+	} catch ( e ) {
+		error( "ADB ERROR: ", e.message, data );
+		return null;
 	}
 
 	if ( res.new && res.new._key )
