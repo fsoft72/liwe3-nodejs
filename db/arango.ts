@@ -602,6 +602,22 @@ export const adb_find_all = async ( db: Database, coll_name: string, data: any, 
 	return await adb_query_all( db, `\n  FOR o IN ${ coll_name }\n  ${ sort } ${ filters } ${ limit } \n  RETURN o`, values, data_type, { count: options?.count } );
 };
 
+export const adb_find_by_affinity = async ( db: Database, coll_name: string, tags: string[], skip_ids: string[] = [] ) => {
+	const query = `
+	FOR c IN ${ coll_name }
+    	FILTER c.id NOT IN @skip_ids
+		LET common_tags = (
+			FOR t IN c.tags
+				FILTER t IN @tags
+				RETURN t
+			)
+    	SORT LENGTH(common_tags) DESC
+    	RETURN { id: c.id, affinity: LENGTH(common_tags) }
+	`;
+
+	return await adb_query_all( db, query, { tags, skip_ids } );
+};
+
 /**
  * returns a single element based on a dict
  *
