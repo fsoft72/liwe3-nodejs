@@ -23,6 +23,8 @@ export interface MiniUserDetails {
 	tags?: string[];
 	/** The user avatar URL */
 	avatar?: string;
+	/** The user group */
+	group?: string;
 
 	/** The unique session key */
 	session_key?: string;
