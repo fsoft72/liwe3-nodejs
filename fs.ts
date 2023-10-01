@@ -225,3 +225,14 @@ export const symlink = ( src: string, dest: string ): void => {
 export const createWriteStream = ( path: string, options: any ) => {
 	return fs.createWriteStream( path, options );
 };
+
+/**
+ * Takes a filename and returns a sanitized version of it.
+ * By default, it replaces all non-alphanumeric characters with underscores and converts to lowercase.
+ *
+ * @param {string} filename - The filename to sanitize.
+ * @returns {string} The sanitized filename.
+ */
+export const sanitize = ( filename: string ) => {
+	return filename.replace( /[^a-z0-9\./]/gi, '_' ).toLowerCase();
+};
