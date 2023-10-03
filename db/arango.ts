@@ -526,6 +526,10 @@ export const adb_prepare_filters = ( prefix: string, data: any, extra_values?: a
 				case 'null':
 					filters.push( `FILTER ${ prefix }.${ name } == null` );
 					break;
+				case 'like':
+					delete values[ k ];
+					filters.push( `FILTER CONTAINS(LOWER(${ prefix }.${ name }), LOWER("${ val }"))` );
+					break;
 				case 'ft':
 				case 'fulltext':
 					delete values[ k ];
