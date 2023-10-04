@@ -65,6 +65,10 @@ export const config_load = ( fname: string = '', _default: any = {}, show_error:
 	return JSON.parse( cfg );
 };
 
+export const module_config_load = ( modname: string, _default: any = {}, show_error: boolean = false, raise_exception: boolean = false ): any => {
+	return config_load( modname, _default, show_error, raise_exception, 'etc/config/modules' );
+};
+
 export const make_default_dirs = ( fullpath: string ): void => {
 	if ( !fs.exists( fullpath ) ) fs.mkdir( fullpath, 0o755, true );
 };
