@@ -236,3 +236,15 @@ export const createWriteStream = ( path: string, options: any ) => {
 export const sanitize = ( filename: string ) => {
 	return filename.replace( /[^a-z0-9\./]/gi, '_' ).toLowerCase();
 };
+
+/**
+ * Returns the size of a file in bytes.
+ * @param path the path to the file
+ * @returns the size of the file in bytes
+ */
+export const fileSize = ( path: string ): number => {
+	const stats = stat( path );
+	const fileSizeInBytes = stats.size;
+
+	return fileSizeInBytes;
+};
