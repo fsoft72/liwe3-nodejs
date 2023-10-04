@@ -267,14 +267,25 @@ export const delete_folder = ( path: string ): void => {
 	fs.rmdirSync( path );
 };
 
-export const shell = ( command: string, cback: any ) => {
+export const shell = async ( command: string, cback: any ) => {
 	const exec = require( 'child_process' ).exec;
 
-	exec( command, ( error: any, stdout: any, stderr: any ) => {
-		console.log( "ERROR: ", error, stdout, stderr );
-		if ( cback ) cback( error, stdout, stderr );
-	}
-	);
+	return new Promise( ( resolve, reject ) => {
+		const res = { stdout: '', stderr: '' };
+
+		console.log( "SHELL: ", command );
+
+		exec( command, ( error: any, stdout: any, stderr: any ) => {
+			res.stdout = stdout;
+			res.stderr = stderr;
+
+			if ( error ) {
+				return cback ? cback( error ) : reject( error );
+			}
+
+			return cback ? cback( null, res ) : resolve( res );
+		} );
+	} );
 };
 
 /**
