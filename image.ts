@@ -71,3 +71,21 @@ export const mk_thumb = async ( src_path: string, dest_path: string, width: numb
 			break;
 	}
 };
+
+export const compress_image = async ( src_path: string, dest_path: string, quality = 80, cback: LCback = undefined ) => {
+	let cmd: string = '';
+	// We take the extension of the source file and use it to determine the type of thumbnail
+	const ext = src_path.split( '.' ).pop();
+
+	switch ( ext ) {
+		case 'jpg':
+		case 'jpeg':
+			// await resize( src_path, dest_path, width, height, options, cback );
+			cmd = `convert "${ src_path }" -quality ${ quality } "${ dest_path }"`;
+			await shell( cmd, cback );
+			return true;
+			break;
+	}
+
+	return false;
+};
