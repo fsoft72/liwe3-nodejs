@@ -581,7 +581,9 @@ export const adb_count = async ( db: Database, coll_name: string, data: any ) =>
  * @param data_type - if present, result list will be filtered before returning
  * @param options	- A `CollectionFindAllOptions` object
  */
-export const adb_find_all = async ( db: Database, coll_name: string, data: any, data_type: any = undefined, options?: CollectionFindAllOptions ) => {  //rows = 0, skip = 0 ) => {
+export const adb_find_all = async ( db: Database, coll_name: string, data: any = undefined, data_type: any = undefined, options?: CollectionFindAllOptions ) => {  //rows = 0, skip = 0 ) => {
+	if ( !data ) data = {};
+
 	const [ filters, values ] = adb_prepare_filters( 'o', data );
 	let limit = '';
 	let { skip = 0, rows = 0 } = options || {};
