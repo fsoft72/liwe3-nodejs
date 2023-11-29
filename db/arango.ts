@@ -81,7 +81,9 @@ const _collection_get = ( db: Database, coll_name: string, raise: boolean = true
 export const adb_init = async ( cfg: ILiweConfig ): Promise<Database> => {
 	let DB_NAME = cfg.database.dbname;
 
-	const adb = new Database();
+	const adb = new Database( {
+		url: cfg.database.server,
+	} );
 	await adb.exists();
 
 	if ( process.env.TEST_DB === "1" )
