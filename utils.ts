@@ -174,17 +174,17 @@ export const unique_code = ( simple: boolean = true, prefix: string = null, seco
  */
 export const unique_code_numbers = ( length: number, second_slice: number = 0 ): string => {
 	const now = new Date();
-	const n = now.getTime(); //  + now.getMilliseconds();
+	const n = now.getTime().toString() + now.getMilliseconds().toString();
 
 	// get the latest length digits of the string
-	let c = n.toString().slice( -length );
+	let c = n.slice( -length );
 
 	if ( !second_slice ) return c;
 
-	const m = now.getTime() + now.getMilliseconds();
+	const m = now.getTime().toString() + now.getMilliseconds().toString();
 
 	// get the latest length digits of the string
-	return `${ c }.${ m.toString().slice( -second_slice ) }`;
+	return `${ c }.${ m.slice( -second_slice ) }`;
 };
 
 /**
