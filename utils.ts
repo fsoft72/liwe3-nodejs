@@ -704,8 +704,10 @@ export const challenge_create = ( params: string[], debug = false ) => {
 	// remove all starting '-' characters
 	while ( ckey[ 0 ] == '-' ) ckey = ckey.substring( 1 );
 
+	/*
 	if ( cfg.debug.enabled || debug )
 		console.log( "=== Server Challenge: ", ckey );
+	*/
 
 	return md5( ckey );
 };
