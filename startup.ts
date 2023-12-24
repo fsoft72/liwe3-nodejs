@@ -66,8 +66,10 @@ const _module_init = async ( name: string, liwe: ILiWE ) => {
 		return;
 	}
 
-	const mi = require( `${ mod_dirname }/methods` ).middleware_init;
-	if ( mi ) await mi( liwe );
+	const methods = require( `${ mod_dirname }/methods` );
+
+	methods.middleware_init && await methods.middleware_init( liwe );
+	methods.init && await methods.init( liwe );
 
 	await require( `${ mod_dirname }/endpoints` ).init( liwe );
 };
@@ -279,7 +281,6 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 	const mods: string[] = liwe.cfg.app.startup?.modules || [];
 
 	await Promise.all( mods.map( async ( m ) => await liwe.module_init( m ) ) );
-	// mods.forEach( ( mod ) => liwe.module_init( mod ) );
 
 	// init of remaining modules
 	await Promise.all( modules.map( async ( m ) => {
