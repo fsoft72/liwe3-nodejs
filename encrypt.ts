@@ -2,14 +2,14 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import { pipeline } from 'stream/promises';
 
-const algorithm = 'aes-512-cbc';
+const algorithm = 'aes-256-cbc';
 
 type encryptKeys = { key: Buffer; iv: Buffer; };
 
 // Returns predictable key and iv based on baseKey
 const buildKey = ( baseKey: string ): encryptKeys => {
 	const key = crypto.createHash( 'sha256' ).update( baseKey ).digest();
-	const iv = crypto.createHash( 'sha256' ).update( key ).digest();
+	const iv = crypto.createHash( 'md5' ).update( key ).digest().slice( 0, 16 );
 
 	return { key, iv };
 };

@@ -53,6 +53,14 @@ export const md5 = ( txt: string, do_check: boolean = true ) => {
 	return crypto.createHash( 'md5' ).update( txt ).digest( 'hex' );
 };
 
+export const md5File = ( fname: string ): string => {
+	const data = fs.readFileSync( fname );
+	const fileContent = data.toString();
+	const md5Hash = md5( fileContent );
+
+	return md5Hash;
+};
+
 export const sha512 = ( txt: string, do_check: boolean = true ) => {
 	if ( !txt || txt?.length == 0 ) return '';
 
