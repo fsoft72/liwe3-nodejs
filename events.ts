@@ -21,7 +21,7 @@ export const liwe_event_emit = async ( req: ILRequest, event: string, data: any 
 
 	event = event.toLowerCase().trim();
 
-	console.log( "=== Event EMIT: ", event, data );
+	if ( req.cfg?.debug?.enabled ) console.log( "=== Event EMIT: ", event, data );
 
 	const handlers = event_handlers[ event ];
 	if ( !handlers ) return response;
