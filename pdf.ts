@@ -13,6 +13,13 @@ interface PDFMetaData {
 }
 
 
+/**
+ * Fills a PDF form with the provided data and saves the modified PDF to the output path.
+ * @param inputPDFPath - The path to the input PDF file.
+ * @param outputPDFPath - The path to save the modified PDF file.
+ * @param data - The data to fill the PDF form with. It should be a record of key-value pairs, where the key represents the field name and the value represents the field value.
+ * @param meta - Optional metadata to set for the PDF document.
+ */
 export const fillPDFForm = async ( inputPDFPath: string, outputPDFPath: string, data: Record<string, string>, meta?: PDFMetaData ) => {
 	const pdfBytes = fs.readFileSync( inputPDFPath );
 	const pdfDoc = await PDFDocument.load( pdfBytes );

@@ -12,6 +12,11 @@ const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
 // import fetch from 'node-fetch';
 
+/**
+ * Checks the validity of a reCAPTCHA response.
+ * @param captcha The reCAPTCHA response string.
+ * @returns A Promise that resolves to the reCAPTCHA verification result.
+ */
 export const recaptcha_check = async ( captcha: string ) => {
 	const body = `response=${ captcha }&secret=${ cfg.user.recaptcha.secret }`;
 
@@ -53,6 +58,12 @@ export const md5 = ( txt: string, do_check: boolean = true ) => {
 	return crypto.createHash( 'md5' ).update( txt ).digest( 'hex' );
 };
 
+/**
+ * Calculates the MD5 hash of a file.
+ *
+ * @param fname - The path to the file.
+ * @returns The MD5 hash of the file.
+ */
 export const md5File = ( fname: string ): string => {
 	const data = fs.readFileSync( fname );
 	const fileContent = data.toString();
@@ -61,6 +72,13 @@ export const md5File = ( fname: string ): string => {
 	return md5Hash;
 };
 
+/**
+ * Calculates the SHA512 hash of a given string.
+ *
+ * @param txt - The string to be hashed.
+ * @param do_check - Optional. Specifies whether to check if the input string is already a valid SHA512 hash. Default is true.
+ * @returns The SHA512 hash of the input string.
+ */
 export const sha512 = ( txt: string, do_check: boolean = true ) => {
 	if ( !txt || txt?.length == 0 ) return '';
 
@@ -125,6 +143,13 @@ export const send_html = ( res: express.Response, payload: string, status_code: 
 	res.status( status_code ).send( payload );
 };
 
+/**
+ * Sends a binary response with the specified buffer, content type, and filename.
+ * @param res - The express response object.
+ * @param buffer - The binary buffer to send.
+ * @param content_type - The content type of the response.
+ * @param filename - The filename for the attachment.
+ */
 export const send_binary = ( res: express.Response, buffer: any, content_type: string, filename: string ) => {
 	res.set( 'Content-Type', content_type );
 	res.set( 'Content-Disposition', `attachment; filename=${ filename }` );
@@ -245,10 +270,23 @@ export const fetch_file = ( url: string, dest_local_path: string ) => {
 	request( url ).pipe( fs.createWriteStream( dest_local_path ) );
 };
 
+/**
+ * Generates a JWT token with the provided payload, secret, and expiration time.
+ * @param payload - The data to be included in the token.
+ * @param secret - The secret key used to sign the token.
+ * @param expires - The expiration time for the token in seconds.
+ * @returns The generated JWT token.
+ */
 export const jwt_crypt = ( payload: any, secret: string, expires: number ): string => {
 	return jwt.sign( { payload }, secret, { expiresIn: expires } );
 };
 
+/**
+ * Decrypts a JWT token using the provided secret.
+ * @param tok - The JWT token to decrypt.
+ * @param secret - The secret used to decrypt the JWT token.
+ * @returns The decrypted payload if the token is valid, otherwise null.
+ */
 export const jwt_decrypt = ( tok: string, secret: string ): any => {
 	try {
 		const payload: any = jwt.verify( tok, secret );
@@ -258,6 +296,10 @@ export const jwt_decrypt = ( tok: string, secret: string ): any => {
 	}
 };
 
+/**
+ * Deletes a folder and all its contents recursively.
+ * @param path - The path of the folder to delete.
+ */
 export const delete_folder = ( path: string ): void => {
 	if ( !fs.existsSync( path ) ) return;
 
@@ -275,6 +317,12 @@ export const delete_folder = ( path: string ): void => {
 	fs.rmdirSync( path );
 };
 
+/**
+ * Executes a shell command asynchronously.
+ * @param command - The shell command to execute.
+ * @param cback - Optional callback function to handle the result or error.
+ * @returns A promise that resolves with the result of the command or rejects with an error.
+ */
 export const shell = async ( command: string, cback: any ) => {
 	const exec = require( 'child_process' ).exec;
 
@@ -373,6 +421,12 @@ export interface IFieldDescr {
 	required?: boolean;
 }
 
+/**
+ * Converts a dictionary object into a typed object based on the provided field descriptions.
+ * @param dct The dictionary object to convert.
+ * @param fields_descr The array of field descriptions.
+ * @returns The typed object with converted values and error information.
+ */
 export const typed_dict = ( dct: any, fields_descr: IFieldDescr[] ) => {
 	const res: any = { ___errors: [] };
 
@@ -464,6 +518,12 @@ const _formatDatetime = ( date: Date, format: string ) => {
 		.replace( /SS/g, _padStart( date.getSeconds() ) )
 		;
 };
+
+/**
+ * Checks if a given date is valid.
+ * @param d - The date to be checked.
+ * @returns A boolean indicating whether the date is valid or not.
+ */
 const isValidDate = ( d: Date ): boolean => !isNaN( d.getTime() );
 
 /**
@@ -483,6 +543,12 @@ export const date_format = ( date: any, format = 'yyyy-mm-dd HH:MM:SS' ): string
 	return isValidDate( datetime ) ? _formatDatetime( datetime, format ) : '';
 };
 
+/**
+ * Checks if the given email is valid.
+ *
+ * @param email - The email to be validated.
+ * @returns True if the email is valid, false otherwise.
+ */
 export const isValidEmail = ( email: string ): boolean => {
 	if ( !email || !email.length ) return false;
 	return !!email.match( /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/ );
@@ -494,12 +560,24 @@ export const isValidDate = ( d: any ) => {
 };
 */
 
+/**
+ * Converts the input value to an integer.
+ * If the input value is falsy or undefined, returns 0.
+ * @param s - The value to convert to an integer.
+ * @returns The converted integer value.
+ */
 export const int = ( s: any ): number => {
 	if ( !s ) return 0;
 	if ( typeof ( s ) === 'undefined' ) s = "0";
 	return parseInt( s.toString(), 10 );
 };
 
+/**
+ * Converts a value to a floating-point number.
+ * If the value is falsy, returns 0.0.
+ * @param s - The value to convert.
+ * @returns The converted floating-point number.
+ */
 export const float = ( s: any ): number => {
 	if ( !s ) return 0.0;
 	return parseFloat( s.toString() );
@@ -676,14 +754,24 @@ export function merge ( target: any, ...sources: any[] ): any {
 	return merge( target, ...sources );
 }
 
-// Randomly extract an element from a list
+/**
+ * Picks a random element from the given list.
+ * @param lst - The list to pick from.
+ * @returns The randomly picked element from the list.
+ */
 export const list_random_pick = ( lst: any[] ) => {
 	if ( !lst ) return '';
 
 	return lst[ Math.floor( Math.random() * lst.length ) ];
 };
 
-// Randomly extracts n elements from a list
+/**
+ * Picks n random elements from the given list.
+ *
+ * @param lst - The list from which to pick random elements.
+ * @param n - The number of random elements to pick.
+ * @returns An array containing n random elements from the list.
+ */
 export const list_random_pick_n = ( lst: any[], n: number ) => {
 	if ( !lst ) return [];
 
@@ -737,6 +825,11 @@ export const challenge_check = ( challenge: string, params: string[] ): boolean 
 	return ch === challenge;
 };
 
+/**
+ * Converts a string into a slug by removing special characters, converting to lowercase, and replacing spaces with dashes.
+ * @param str - The string to be slugified.
+ * @returns The slugified string.
+ */
 export const slugify = ( str: string ) => {
 	str = str.replace( /^\s+|\s+$/g, '' ); // trim
 	str = str.toLowerCase();
@@ -768,6 +861,11 @@ export const slugify = ( str: string ) => {
 
 const dec2base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 
+/**
+ * Converts a decimal number to a base-96 string representation.
+ * @param decimal The decimal number to convert.
+ * @returns The base-96 string representation of the decimal number.
+ */
 export const decimalToBase96 = ( decimal: number ): string => {
 	let result = "";
 	while ( decimal > 0 ) {
@@ -778,6 +876,12 @@ export const decimalToBase96 = ( decimal: number ): string => {
 	return result.split( "" ).reverse().join( "" );
 };
 
+/**
+ * Converts a base96 number to decimal.
+ *
+ * @param base96 - The base96 number to convert.
+ * @returns The decimal representation of the base96 number.
+ */
 export const base96ToDecimal = ( base96: string ): number => {
 	let decimal = 0;
 	for ( let i = base96.length - 1; i >= 0; i-- ) {
@@ -789,6 +893,14 @@ export const base96ToDecimal = ( base96: string ): number => {
 	return decimal;
 };
 
+/**
+ * Formats a number as a currency string.
+ * @param number - The number to format.
+ * @param options - Optional formatting options.
+ * @param options.thousandSeparator - The character used as a thousand separator. Default is '.'.
+ * @param options.decimalSeparator - The character used as a decimal separator. Default is ','.
+ * @returns The formatted currency string.
+ */
 export const formatCurrency = ( number: number, { thousandSeparator = '.', decimalSeparator = ',' } = {} ): string => {
 	// if number is a string, convert to float
 	if ( !number ) return '';

@@ -2,6 +2,12 @@
 
 import { ILRequest, ILResponse } from './types';
 
+/**
+ * Middleware function to trace incoming requests.
+ * @param req - The request object.
+ * @param res - The response object.
+ * @param next - The next function in the middleware chain.
+ */
 export const trace_request = ( req: ILRequest, res: ILResponse, next: any ) => {
 	const txt = [];
 

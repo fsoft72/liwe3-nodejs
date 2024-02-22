@@ -77,10 +77,20 @@ export class SocketIORouter {
 		console.log( `=======  Socket.IO server started` );
 	}
 
+	/**
+	 * Adds a listener for the specified event name.
+	 *
+	 * @param name - The name of the event to listen for.
+	 * @param cback - The callback function to be executed when the event is triggered.
+	 */
 	public listener_add ( name: string, cback: any ) {
 		this.listeners[ name ] = cback;
 	}
 
+	/**
+	 * Removes a listener by name.
+	 * @param name - The name of the listener to remove.
+	 */
 	public listener_del ( name: string ) {
 		delete this.listeners[ name ];
 	}
@@ -108,6 +118,12 @@ export class SocketIORouter {
 		this.io.emit( 'liwe.msg', p );
 	}
 
+	/**
+	 * Sends a raw message directly to a specific socket.
+	 * @param socket_id The ID of the socket to send the message to.
+	 * @param action The action associated with the message.
+	 * @param payload The payload of the message.
+	 */
 	public send_direct_raw ( socket_id: string, action: string, payload: any ) {
 		this.io.to( socket_id ).emit( JSON.stringify( { action, payload } ) );
 	}

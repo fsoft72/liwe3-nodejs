@@ -47,6 +47,13 @@ export const perm_available = ( user: MiniUserDetails, perms: string[] ): boolea
 	return authorized;
 };
 
+/**
+ * Middleware function that checks if the user has the required permissions.
+ * If the user does not have the required permissions, it sends a 403 Forbidden response.
+ * If the `check_permissions` configuration option is disabled, it allows the request to proceed.
+ * @param perms - An array of permission strings that the user must have.
+ * @returns A middleware function that can be used in an Express.js route handler.
+ */
 export const perms = ( perms: string[] ) => {
 	return ( req: ILRequest, res: ILResponse, next: any ) => {
 		if ( cfg.debug?.auth_dump ) {
@@ -63,6 +70,11 @@ export const perms = ( perms: string[] ) => {
 	};
 };
 
+/**
+ * Checks if the user is logged in.
+ * @param req - The request object.
+ * @param res - The response object.
+ */
 export const is_logged = ( req: ILRequest, res: ILResponse ) => {
 	if ( !req.user ) return send_error( res, { message: "not authorized" }, 403 );
 };

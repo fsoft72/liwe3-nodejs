@@ -222,6 +222,12 @@ export const symlink = ( src: string, dest: string ): void => {
 	fs.symlinkSync( src, dest );
 };
 
+/**
+ * Creates a write stream to the specified path with the given options.
+ * @param path - The path to the file.
+ * @param options - The options for creating the write stream.
+ * @returns The created write stream.
+ */
 export const createWriteStream = ( path: string, options: any ) => {
 	return fs.createWriteStream( path, options );
 };

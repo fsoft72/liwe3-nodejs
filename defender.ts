@@ -12,6 +12,12 @@ const real_ip = ( ipAddr: string ) => {
 	return g[ 1 ];
 };
 
+/**
+ * Retrieves the real IP address from the request object.
+ *
+ * @param request - The request object containing the headers and socket information.
+ * @returns The real IP address as a string.
+ */
 export const get_real_ip = ( request: ILRequest ): string => {
 	let xff = request.headers[ 'x-forwarded-for' ];
 
@@ -104,6 +110,10 @@ export const blacklist_ip = ( ip_addr: string, duration: number ) => {
 	_blacklist_ips[ ip_addr ] = newDateObj;
 };
 
+/**
+ * Retrieves a list of blacklisted IP addresses along with their corresponding dates.
+ * @returns An array of objects containing the IP address and date of each blacklisted IP.
+ */
 export const blacklist_ip_list = () => {
 	const ips: { ip: string, date: Date; }[] = [];
 
@@ -154,6 +164,15 @@ const _ip_limit_reached = ( ipAddress: string ): boolean => {
 	return false;
 };
 
+/**
+ * Middleware function that acts as a defender against suspicious requests.
+ * It checks for blacklisted IP addresses and suspicious URL fragments.
+ * If an IP address is blacklisted, it returns a 403 response.
+ * If a suspicious URL fragment is found, it handles the request accordingly.
+ * @param request - The incoming request object.
+ * @param response - The outgoing response object.
+ * @param next - The next middleware function in the chain.
+ */
 const Defender = ( request: ILRequest, response: ILResponse, next: any ) => {
 	let url = request.originalUrl;
 	const ip = get_real_ip( request );

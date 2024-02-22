@@ -47,6 +47,15 @@ export const resize = ( src_path: string, dest_path: string, width: number = 0, 
 	} );
 };
 
+/**
+ * Creates a thumbnail image from the source image file.
+ * @param src_path The path of the source image file.
+ * @param dest_path The path where the thumbnail image will be saved.
+ * @param width The width of the thumbnail image. Defaults to 0.
+ * @param height The height of the thumbnail image. Defaults to 0.
+ * @param options The options for resizing the image. Defaults to null.
+ * @param cback The callback function to be called after the thumbnail is created. Defaults to undefined.
+ */
 export const mk_thumb = async ( src_path: string, dest_path: string, width: number = 0, height: number = 0, options: ResizeOptions = null, cback: LCback = undefined ) => {
 	let cmd: string = '';
 	const n = width > 0 ? width : height;
@@ -72,6 +81,15 @@ export const mk_thumb = async ( src_path: string, dest_path: string, width: numb
 	}
 };
 
+/**
+ * Compresses an image file.
+ *
+ * @param src_path - The path of the source image file.
+ * @param dest_path - The path where the compressed image will be saved.
+ * @param quality - The quality of the compressed image (default: 80).
+ * @param cback - Optional callback function to be executed after compression.
+ * @returns A boolean indicating whether the compression was successful.
+ */
 export const compress_image = async ( src_path: string, dest_path: string, quality = 80, cback: LCback = undefined ) => {
 	let cmd: string = '';
 	// We take the extension of the source file and use it to determine the type of thumbnail

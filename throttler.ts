@@ -55,6 +55,14 @@ const _ip_request_limit_reached = ( ipAddress: string ): boolean => {
 	return false;
 };
 
+/**
+ * Throttles incoming requests based on IP address.
+ * If the IP address has reached the request limit, it delays the request before passing it to the next middleware.
+ *
+ * @param request - The incoming request object.
+ * @param response - The outgoing response object.
+ * @param next - The next middleware function.
+ */
 const Throttler = ( request: ILRequest, response: ILResponse, next: any ) => {
 	const ip = get_real_ip( request );
 

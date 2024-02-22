@@ -11,7 +11,15 @@ import * as crypto from 'crypto';
 import { challenge_create } from './utils';
 import { error } from './console_colors';
 
-// Encrypts the given payload using the provided secret message
+/**
+ * Encrypts the payload using AES-256-GCM encryption algorithm.
+ *
+ * @param payload - The payload to be encrypted.
+ * @returns The encrypted payload as a string.
+ *
+ * @see decryptPayload
+ * @see cryptMessage
+ */
 export const cryptPayload = ( payload: any ): string => {
 	const algorithm = 'aes-256-gcm';
 	// generate a random number
@@ -35,7 +43,13 @@ export const cryptPayload = ( payload: any ): string => {
 	return iv.toString( 'hex' ) + ':' + authTag.toString( 'hex' ) + ':' + numStr + ':' + encrypted;
 };
 
-// Decrypts the encrypted payload using the provided secret message
+/**
+ * Decrypts an encrypted payload.
+ * @param encryptedPayload The encrypted payload to decrypt.
+ * @returns The decrypted payload as an object, or null if decryption fails or the input format is invalid.
+ *
+ * @see cryptPayload
+ */
 export const decryptPayload = ( encryptedPayload: string ): any | null => {
 	const algorithm = 'aes-256-gcm';
 	const components = encryptedPayload.split( ':' );
@@ -69,6 +83,14 @@ type CryptedMessage = {
 	challenge: string;
 };
 
+/**
+ * Encrypts a message payload and creates a challenge.
+ * @param payload The message payload to be encrypted.
+ * @returns An object containing the encrypted block and the challenge.
+ *
+ * @see cryptPayload
+ * @see decryptMessage
+ */
 export const cryptMessage = ( payload: any ): CryptedMessage => {
 	const cryptedBlock = cryptPayload( payload );
 	const challenge = challenge_create( [ cryptedBlock ] );
@@ -76,6 +98,15 @@ export const cryptMessage = ( payload: any ): CryptedMessage => {
 	return { cryptedBlock, challenge };
 };
 
+/**
+ * Sends a cryptographically encrypted message to the specified URL.
+ * @param fullURL The URL to send the message to.
+ * @param payload The payload to be sent.
+ * @returns A Promise that resolves to the decrypted response from the server.
+ *
+ * @see cryptMessage
+ * @see decryptMessage
+ */
 export const cryptSend = async ( fullURL: string, payload: any ): Promise<any> => {
 	// send data to the blockchain server in a POST request using fetch
 	const response = await fetch( fullURL, {
@@ -96,6 +127,16 @@ export const cryptSend = async ( fullURL: string, payload: any ): Promise<any> =
 	return decryptMessage( json );
 };
 
+/**
+ * Decrypts a crypted message.
+ * @param cryptedMessage - The crypted message to decrypt.
+ * @returns The decrypted payload or null if the challenge mismatched.
+ *
+ * @see cryptMessage
+ * @see cryptSend
+ * @see cryptPayload
+ * @see decryptPayload
+ */
 export const decryptMessage = ( cryptedMessage: CryptedMessage ): any | null => {
 	const { cryptedBlock, challenge } = cryptedMessage;
 	const check_challenge = challenge_create( [ cryptedBlock ] );
