@@ -22,16 +22,19 @@ export const perm_available = ( user: MiniUserDetails, perms: string[] ): boolea
 	if ( perms.indexOf( "is-logged" ) !== -1 ) return true;
 
 	// If the user has no perms, return false
-	if ( !user.perms || !Object.keys( user.perms ).length ) return false;
+	// if ( !user.perms || !Object.keys( user.perms ).length ) return false;
+	if ( user?.perms.length === 0 ) return false;
 
 	// Special permissions: system.admin can always do everything
-	if ( user.perms.system?.indexOf( "admin" ) >= 0 ) return true;
+	// if ( user.perms.system?.indexOf( "admin" ) >= 0 ) return true;
+	if ( user.perms.indexOf( 'system.admin' ) >= 0 ) return true;
 
 	let authorized = false;
 	perms.map( ( p ) => {
 		// we need just one permission to authorize
 		if ( authorized ) return;
 
+		/*
 		const spl = p.split( "." );
 		const mod = user.perms[ spl[ 0 ] ] || [];
 
@@ -39,6 +42,9 @@ export const perm_available = ( user: MiniUserDetails, perms: string[] ): boolea
 			authorized = true;
 		else
 			authorized = ( mod.indexOf( spl[ 1 ] ) > -1 );
+		*/
+
+		authorized = user.perms.indexOf( p ) >= 0;
 	} );
 
 	if ( cfg.debug?.auth_dump )
