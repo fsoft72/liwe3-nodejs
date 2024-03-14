@@ -34,16 +34,6 @@ export const perm_available = ( user: MiniUserDetails, perms: string[] ): boolea
 		// we need just one permission to authorize
 		if ( authorized ) return;
 
-		/*
-		const spl = p.split( "." );
-		const mod = user.perms[ spl[ 0 ] ] || [];
-
-		if ( mod.indexOf( "admin" ) > -1 )
-			authorized = true;
-		else
-			authorized = ( mod.indexOf( spl[ 1 ] ) > -1 );
-		*/
-
 		authorized = user.perms.indexOf( p ) >= 0;
 	} );
 
