@@ -25,6 +25,8 @@ export interface MiniUserDetails {
 	avatar?: string;
 	/** The user group */
 	group?: string;
+	/** The username */
+	username?: string;
 
 	/** The unique session key */
 	session_key?: string;
