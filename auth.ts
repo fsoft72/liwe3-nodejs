@@ -13,6 +13,10 @@ const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 export const perm_available = ( user: MiniUserDetails, perms: string[] ): boolean => {
 	if ( !user ) return false;
 
+	if ( !perms ) return false;
+
+	if ( !user.perms ) user.perms = [];
+
 	if ( cfg.debug?.auth_dump ) {
 		console.log( "REQUIRED: ", perms );
 		console.log( "USER %s PERMS: %o", user.email, user.perms );
@@ -23,11 +27,11 @@ export const perm_available = ( user: MiniUserDetails, perms: string[] ): boolea
 
 	// If the user has no perms, return false
 	// if ( !user.perms || !Object.keys( user.perms ).length ) return false;
-	if ( user?.perms.length === 0 ) return false;
+	if ( user?.perms?.length == 0 ) return false;
 
 	// Special permissions: system.admin can always do everything
 	// if ( user.perms.system?.indexOf( "admin" ) >= 0 ) return true;
-	if ( user.perms.indexOf( 'system.admin' ) >= 0 ) return true;
+	if ( user.perms?.indexOf( 'system.admin' ) >= 0 ) return true;
 
 	let authorized = false;
 	perms.map( ( p ) => {
