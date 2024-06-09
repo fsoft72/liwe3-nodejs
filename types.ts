@@ -7,6 +7,8 @@ export interface MiniUserDetails {
 	id?: string;
 	/** The domain id the user belongs to */
 	id_domain?: string;
+	/** The domain code the user belongs to */
+	domain?: string;
 	/** The user email */
 	email?: string;
 	/** The user first name */
