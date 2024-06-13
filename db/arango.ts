@@ -605,9 +605,9 @@ export const adb_find_all = async ( db: Database, coll_name: string, data: any =
 		sort = `SORT ${ _sort.join( ', ' ) }`;
 
 	if ( rows > 0 )
-		limit = `LIMIT ${ skip }, ${ rows }`;
+		limit = `\n   LIMIT ${ skip }, ${ rows }`;
 
-	return await adb_query_all( db, `\n  FOR o IN ${ coll_name }\n  ${ sort } ${ filters } ${ limit } \n  RETURN o`, values, data_type, { count: options?.count } );
+	return await adb_query_all( db, `\nFOR o IN ${ coll_name }\n  ${ sort } ${ filters } ${ limit } \nRETURN o`, values, data_type, { count: options?.count } );
 };
 
 export const adb_find_by_affinity = async ( db: Database, coll_name: string, tags: string[], skip_ids: string[] = [] ) => {
@@ -633,10 +633,11 @@ export const adb_find_by_affinity = async ( db: Database, coll_name: string, tag
  * @param coll_name   the collection name
  * @param data        the data to filter on (key/val)
  * @param data_type - if present, result list will be filtered before returning
+ * @param options	- A `CollectionFindAllOptions` object
  *
  * @note: if no filter is specified, returns a warning and returns null
  */
-export const adb_find_one = async ( db: Database, coll_name: string, data: any, data_type: any = undefined ) => {
+export const adb_find_one = async ( db: Database, coll_name: string, data: any, data_type: any = undefined, options?: CollectionFindAllOptions ) => {
 	const [ filters, values ] = adb_prepare_filters( 'o', data );
 
 	if ( !filters ) {
@@ -645,7 +646,14 @@ export const adb_find_one = async ( db: Database, coll_name: string, data: any, 
 		return null;
 	}
 
-	return await adb_query_one( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values, data_type );
+	options = { ...options, rows: 1 };
+
+	// return await adb_query_one( db, `FOR o IN ${ coll_name } ${ filters } RETURN o`, values, data_type, options );
+	const res = await adb_find_all( db, coll_name, data, data_type, options );
+
+	if ( !res || !res.length ) return null;
+
+	return res[ 0 ];
 };
 
 /**
