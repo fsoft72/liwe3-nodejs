@@ -119,6 +119,8 @@ export interface ILError {
 	message: string;
 	/** Error stack trace */
 	stack?: string;
+	/** Quiet error */
+	quiet?: boolean;
 }
 
 /** A simple utility that returns `true` or `false` if the parameter is true, "true" or '1'
