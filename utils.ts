@@ -925,3 +925,11 @@ export const formatCurrency = ( number: number, { thousandSeparator = '.', decim
 
 	return buffer;
 };
+
+/// export a number with a fixed number of decimals
+export const toNumDecimal = ( num: number, dec: number ): number => {
+	const s = ( num ?? 0 ).toString();
+	const n = parseFloat( s ).toFixed( dec );
+
+	return parseFloat( n );
+};
