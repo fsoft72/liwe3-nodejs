@@ -1,5 +1,6 @@
 import * as express from 'express';
 import { SocketIORouter } from './socketio';
+import SSEServer from './sse';
 
 /** MiniUserDetails */
 export interface MiniUserDetails {
@@ -144,6 +145,7 @@ export interface ILiWE {
 	app_name: string;
 	port: number;
 	db: any;
+	sse: SSEServer;
 	module_init: ( name: string ) => void | null;
 }
 
@@ -358,6 +360,8 @@ export interface ILiweConfig {
 		location: boolean;
 		socketio: boolean;
 		socketio_debug: boolean;
+		sse: boolean;
+		sse_debug: boolean;
 	};
 
 	warns: any;

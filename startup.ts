@@ -8,6 +8,8 @@ import { ILRequest, ILResponse, ILApplication, ILNextFunction, ILiWE, ILiweConfi
 import { public_fullpath, upload_fullpath, make_default_dirs, temp_fullpath, module_fullpath, config_load } from './liwe';
 import Defender, { applySettings } from './defender';
 import Throttler, { applySettings as applyThrottlerSettings } from './throttler';
+import SSEServer from './sse';
+
 import { info, warn, colors, error } from './console_colors';
 // import { loc } from './locale';
 import * as fileUpload from 'express-fileupload';
@@ -91,6 +93,7 @@ export const startup_kernel = async (): Promise<ILiWE> => {
 		cwd: '',
 		module_init: null,
 		port: cfg.server.port,
+		sse: null,
 		db: null,
 	};
 
@@ -130,6 +133,12 @@ const _socket_io_router = ( app: ILApplication, cfg: ILiweConfig ) => {
 	app.socket = new SocketIORouter( cfg.features.socketio_debug );
 };
 
+const _sse_server = ( liwe: ILiWE, cfg: ILiweConfig ) => {
+	if ( !cfg.features.sse ) return;
+
+	liwe.sse = new SSEServer( liwe.app, cfg.features.sse_debug );
+};
+
 /**
  * This is the main function that startups the whole LiWE Framework
  *
@@ -142,6 +151,9 @@ export const startup = async ( options: LiWEServerOptions = {} ): Promise<ILiWE>
 
 	liwe.app = express();
 	_socket_io_router( liwe.app, liwe.cfg );
+	_sse_server( liwe, liwe.cfg );
+
+
 
 	make_default_dirs( upload_fullpath( 'temp' ) );
 	make_default_dirs( temp_fullpath() );
