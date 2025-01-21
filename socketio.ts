@@ -2,6 +2,7 @@ import * as io from 'socket.io';
 // import * as express from 'express';
 import * as http from 'http';
 import { ILError } from './types';
+import { info, colors } from './console_colors';
 
 interface ServerToClientEvents {
 	broadcast: ( type: string, payload: any ) => void;
@@ -74,7 +75,7 @@ export class SocketIORouter {
 
 		this.io.on( 'connect', this.io_init );
 
-		console.log( `=======  Socket.IO server started` );
+		info( `Socket.IO server  ${ colors.Yellow } started ${ colors.Reset }` );
 	}
 
 	/**
