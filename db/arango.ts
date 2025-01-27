@@ -4,10 +4,10 @@
 import { Database } from 'arangojs';
 import { ILiweConfig } from '../types';
 import { critical, error } from '../console_colors';
-import { DocumentCollection } from "arangojs/collection";
 
 import { config_load } from "../liwe";
 import { keys_filter } from "../utils";
+import { DocumentCollection } from 'arangojs/collections';
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
