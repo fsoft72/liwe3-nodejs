@@ -416,7 +416,7 @@ export const adb_collection_init = async ( db: Database, name: string, idx: DBCo
 				try {
 					await coll.ensureIndex( p );
 				} catch ( e ) {
-					console.error( "ERROR CREATING INDEX: ", p.name );
+					console.error( "ERROR CREATING INDEX: ", p.name, " FOR COLL: ", name );
 				}
 			}
 
@@ -427,31 +427,12 @@ export const adb_collection_init = async ( db: Database, name: string, idx: DBCo
 
 	// If the collection has fulltext indexes, we need to create a special view
 	if ( Object.keys( ft_fields ).length ) {
-		const view_opts: any = {  //ArangoSearchViewPropertiesOptions = {
-			"writebufferIdle": 64,
-			"writebufferSizeMax": 33554432,
-			"consolidationPolicy": {
-				"type": "tier",
-				"segmentsBytesFloor": 2097152,
-				"segmentsBytesMax": 5368709120,
-				"segmentsMax": 10,
-				"segmentsMin": 1,
-				"minScore": 0
-			},
-			"writebufferActive": 0,
-			"consolidationIntervalMsec": 1000,
-			"cleanupIntervalStep": 2,
-			"commitIntervalMsec": 1000,
-			"primarySortCompression": "lz4"
-		};
-
-		const links = { [ name ]: { "analyzers": [ "identity" ], fields: ft_fields } };
-		view_opts.links = links;
 		const v_name = `v_${ name }`;
 		const views = await db.listViews();
 
-		if ( !views.find( ( v ) => v.name == v_name ) )
-			await db.createView( `v_${ name }`, view_opts );
+		if ( !views.find( ( v ) => v.name == v_name ) ) {
+			await db.createView( `v_${ name }`, { type: 'arangosearch' } );
+		}
 	}
 
 	return coll;
