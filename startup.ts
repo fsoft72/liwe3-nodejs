@@ -249,9 +249,8 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 	_defender( liwe.app, liwe.cfg );
 	_throttler( liwe.app, liwe.cfg );
 	_cors( liwe.app, liwe.cfg );
-
-	liwe.app.use( bodyParser.json() );
-	liwe.app.use( bodyParser.urlencoded( { extended: true } ) );
+	liwe.app.use( bodyParser.json( { limit: `${ liwe.cfg.upload.max_upload_size }mb` } ) );
+	liwe.app.use( bodyParser.urlencoded( { extended: true, limit: `${ liwe.cfg.upload.max_upload_size }mb` } ) );
 
 	if ( !liwe.cfg?.security?.remote ) {
 		error( "cfg.security.remote not defined" );
