@@ -224,7 +224,7 @@ export const adb_record_add = async ( db: Database, coll_name: string, data: any
 	data.updated = d;
 	try {
 		if ( data._id ) {
-			res = await coll.update( data._id, data, { returnNew: true } );
+			res = await coll.update( data._id, data, { returnNew: true, mergeObjects: false } );
 		} else {
 			data.created = d;
 			res = await coll.save( data, { returnNew: true } );
