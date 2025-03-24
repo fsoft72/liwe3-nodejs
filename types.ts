@@ -147,6 +147,7 @@ export interface ILiWE {
 	db: any;
 	sse: SSEServer;
 	module_init: ( name: string ) => void | null;
+	startDate: number; // Start date in milliseconds
 }
 
 export interface ILiWEDefaultUser {

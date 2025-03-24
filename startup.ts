@@ -95,6 +95,7 @@ export const startup_kernel = async (): Promise<ILiWE> => {
 		port: cfg.server.port,
 		sse: null,
 		db: null,
+		startDate: new Date().getTime(),
 	};
 
 	if ( !cfg?.app?.languages ) {
