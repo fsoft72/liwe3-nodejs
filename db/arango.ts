@@ -7,7 +7,7 @@ import { critical, error } from '../console_colors';
 
 import { config_load } from "../liwe";
 import { keys_filter } from "../utils";
-import { DocumentCollection } from 'arangojs/collections';
+import { DocumentCollection, EdgeCollection } from 'arangojs/collections';
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
@@ -32,6 +32,8 @@ export interface DBCollectionIndex {
 export interface DBCollectionCreateOptions {
 	/** Set this to true if you want to drop the collection if it already exists. */
 	drop?: boolean;
+	/** Set this to true if you want to create an edge collection. */
+	edge?: boolean;
 }
 
 interface SortOptions {
@@ -64,16 +66,15 @@ const _check_default_analyzers = async ( db: Database ) => {
 };
 
 // gets a collection by its name, returns null if it does not exist
-const _collection_get = ( db: Database, coll_name: string, raise: boolean = true ): DocumentCollection => {
+const _collection_get = ( db: Database, coll_name: string, raise: boolean = true, isEdge: boolean = false ): DocumentCollection | EdgeCollection => {
 	if ( !db ) return null;
 
-	const coll: DocumentCollection = db.collection( coll_name );
+	const coll = isEdge ? db.edgeCollection( coll_name ) : db.collection( coll_name );
 
 	if ( !coll && raise ) throw ( new Error( `Collection ${ coll_name } does not exist` ) );
 
 	return coll;
 };
-
 
 /**
  * ArangoDB database initialization
@@ -157,20 +158,21 @@ export const adb_db_drop = async ( adb: Database, name: string ): Promise<boolea
 /**
  * Creates a collection if it does not exist
  *
- * @param db 		ArangoDB database
- * @param name 		Name of the collection to create
- * @param options 	Options
+ * @param db        ArangoDB database
+ * @param name      Name of the collection to create
+ * @param options   Options
  *
- * @returns 		ArangoDB collection
- * @throws 			ArangoError
+ * @returns         ArangoDB collection (either DocumentCollection or EdgeCollection)
+ * @throws          ArangoError
  *
  */
-export const adb_collection_create = async ( db: Database, name: string, options: DBCollectionCreateOptions = null ): Promise<any> => {
+export const adb_collection_create = async ( db: Database, name: string, options: DBCollectionCreateOptions = null ): Promise<DocumentCollection | EdgeCollection> => {
 	if ( !db ) return null;
 	let coll;
+	const isEdge = !!options?.edge;
 
 	if ( options?.drop ) {
-		coll = await db.collection( name );
+		coll = _collection_get( db, name, false, isEdge );
 		if ( coll ) {
 			try {
 				await coll.drop();
@@ -179,11 +181,15 @@ export const adb_collection_create = async ( db: Database, name: string, options
 	}
 
 	try {
-		coll = await db.createCollection( name );
-		await coll.ensureIndex( { type: "persistent", fields: [ "created" ], unique: false } );
-		await coll.ensureIndex( { type: "persistent", fields: [ "updated" ], unique: false } );
+		if ( isEdge ) {
+			coll = await db.createEdgeCollection( name );
+		} else {
+			coll = await db.createCollection( name );
+			await coll.ensureIndex( { type: "persistent", fields: [ "created" ], unique: false } );
+			await coll.ensureIndex( { type: "persistent", fields: [ "updated" ], unique: false } );
+		}
 	} catch ( e ) {
-		coll = await db.collection( name );
+		coll = isEdge ? db.edgeCollection( name ) : db.collection( name );
 	}
 
 	return coll;
@@ -391,16 +397,109 @@ export const adb_query_count = async ( db: Database, query: string, params: any 
 };
 
 /**
+ * Creates an edge between two documents
+ *
+ * @param db         ArangoDB database
+ * @param coll_name  Name of the edge collection
+ * @param fromId     ID of the source document
+ * @param toId       ID of the target document
+ * @param data       Additional edge data
+ * @returns          The created edge
+ */
+export const adb_edge_create = async ( db: Database, coll_name: string, fromId: string, toId: string, data: any = {} ): Promise<any> => {
+	if ( !db ) return null;
+
+	const coll = _collection_get( db, coll_name, true, true ) as EdgeCollection;
+	if ( !coll ) return null;
+
+	const d = new Date();
+	data = {
+		...data,
+		_from: fromId,
+		_to: toId,
+		created: d,
+		updated: d
+	};
+
+	try {
+		const res = await coll.save( data, { returnNew: true } );
+		return res.new || res;
+	} catch ( e ) {
+		error( "ADB EDGE ERROR: ", e.message, { fromId, toId, data } );
+		return null;
+	}
+};
+
+/**
+ * Finds edges connected to a document
+ *
+ * @param db         ArangoDB database
+ * @param coll_name  Name of the edge collection
+ * @param documentId ID of the document to find edges for
+ * @param direction  Direction of the edges ('outbound', 'inbound', or 'any')
+ * @returns          Array of edges
+ */
+export const adb_edges_find = async ( db: Database, coll_name: string, documentId: string, direction: 'outbound' | 'inbound' | 'any' = 'any' ): Promise<any[]> => {
+	if ( !db ) return [];
+
+	const coll = _collection_get( db, coll_name, true, true ) as EdgeCollection;
+	if ( !coll ) return [];
+
+	try {
+		let edges;
+		if ( direction === 'outbound' ) {
+			edges = await coll.outbound( documentId );
+		} else if ( direction === 'inbound' ) {
+			edges = await coll.inbound( documentId );
+		} else {
+			edges = await coll.edges( documentId );
+		}
+		return await edges.all();
+	} catch ( e ) {
+		error( "ADB EDGE FIND ERROR: ", e.message, { documentId, direction } );
+		return [];
+	}
+};
+
+/**
+ * Performs a graph traversal starting from a document
+ *
+ * @param db           ArangoDB database
+ * @param startVertex  Start vertex document ID
+ * @param edgeCollection Name of the edge collection
+ * @param direction    Direction of traversal ('outbound', 'inbound', 'any')
+ * @param options      Traversal options (min/max depth, etc.)
+ * @returns            Traversal results
+ */
+export const adb_graph_traverse = async ( db: Database, startVertex: string, edgeCollection: string, direction: 'outbound' | 'inbound' | 'any' = 'outbound', options: any = {} ): Promise<any> => {
+	if ( !db ) return { vertices: [], paths: [] };
+
+	const query = `
+    FOR v, e, p IN ${ options.minDepth || 1 }..${ options.maxDepth || 1 } ${ direction }
+    ${ startVertex }
+    ${ edgeCollection }
+    RETURN { vertex: v, edge: e, path: p }
+  `;
+
+	try {
+		return await adb_query_all( db, query );
+	} catch ( e ) {
+		error( "ADB GRAPH TRAVERSAL ERROR: ", e.message );
+		return { vertices: [], paths: [] };
+	}
+};
+
+/**
  * Creates a collection in the database setting the indexes
  *
- * @param db 		ArangoDB database
- * @param name 		Name of the collection
- * @param idx 		Indexes to create
- * @param options 	Options to create the collection
+ * @param db        ArangoDB database
+ * @param name      Name of the collection to create
+ * @param idx       Indexes to create
+ * @param options   Options to create the collection
  *
- * @returns 		The collection
+ * @returns         The collection (either DocumentCollection or EdgeCollection)
  */
-export const adb_collection_init = async ( db: Database, name: string, idx: DBCollectionIndex[] = null, options: DBCollectionCreateOptions = null ) => {
+export const adb_collection_init = async ( db: Database, name: string, idx: DBCollectionIndex[] = null, options: DBCollectionCreateOptions = null ): Promise<DocumentCollection | EdgeCollection> => {
 	if ( !db ) return null;
 
 	const coll = await adb_collection_create( db, name, options );
@@ -410,22 +509,28 @@ export const adb_collection_init = async ( db: Database, name: string, idx: DBCo
 		await Promise.all( idx.map( async ( p ) => {
 			const fields = p.fields.join( '_' ).replace( "[*]", "" );
 			p.name = `idx_${ name }_${ fields }`;
-			// console.log( "NAME: ", p.name );
 
 			if ( p.type != 'fulltext' ) {
 				try {
 					await coll.ensureIndex( p );
 				} catch ( e ) {
-					console.error( "ERROR CREATING INDEX: ", p.name, " FOR COLL: ", name );
+					error( "ERROR CREATING INDEX:", p.name, "FOR COLLECTION:", name, e.message );
 				}
 			}
 
-			// TODO: fulltext indexes need much more love ;-)
-			if ( p.type == 'fulltext' ) ft_fields[ fields ] = { "analyzers": [ "norm_it", "identity" ], "includeAllFields": false, "storeValues": "none", "trackListPositions": false };
+			// Fulltext index handling
+			if ( p.type == 'fulltext' ) {
+				ft_fields[ fields ] = {
+					"analyzers": [ "norm_it", "identity" ],
+					"includeAllFields": false,
+					"storeValues": "none",
+					"trackListPositions": false
+				};
+			}
 		} ) );
 	}
 
-	// If the collection has fulltext indexes, we need to create a special view
+	// View creation for fulltext indexes
 	if ( Object.keys( ft_fields ).length ) {
 		const v_name = `v_${ name }`;
 		const views = await db.listViews();
