@@ -7,7 +7,9 @@ import { critical, error } from '../console_colors';
 
 import { config_load } from "../liwe";
 import { keys_filter } from "../utils";
-import { DocumentCollection, EdgeCollection } from 'arangojs/collections';
+import { DocumentCollection, EdgeCollection, } from 'arangojs/collections';
+import { ArangoApiResponse } from 'arangojs/connection';
+import { DocumentEdgesResult } from 'arangojs/documents';
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
@@ -184,6 +186,8 @@ export const adb_collection_create = async ( db: Database, name: string, options
 	try {
 		if ( isEdge ) {
 			coll = await db.createEdgeCollection( name );
+			await coll.ensureIndex( { type: "persistent", fields: [ "_from" ], unique: false } );
+			await coll.ensureIndex( { type: "persistent", fields: [ "_to" ], unique: false } );
 		} else {
 			coll = await db.createCollection( name );
 			await coll.ensureIndex( { type: "persistent", fields: [ "created" ], unique: false } );
@@ -432,6 +436,20 @@ export const adb_edge_create = async ( db: Database, coll_name: string, fromId: 
 };
 
 /**
+ * Updates an edge by its _id.
+ *
+ * @param db         ArangoDB database
+ * @param coll_name  Name of the edge collection
+ * @param edgeId     ID of the edge to update
+ * @param data       Additional edge data
+ * @returns         The updated edge
+ */
+export const adb_edge_update = async ( db: Database, coll_name: string, edgeId: string, data: any ) => {
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
+	if ( !coll ) return null;
+	return await coll.update( edgeId, data, { returnNew: true } );
+};
+/**
  * Finds edges connected to a document
  *
  * @param db         ArangoDB database
@@ -446,8 +464,9 @@ export const adb_edges_find = async ( db: Database, coll_name: string, documentI
 	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
 	if ( !coll ) return [];
 
+	let edges: DocumentEdgesResult<any>;
+
 	try {
-		let edges: [];
 		if ( direction === 'outbound' ) {
 			edges = await coll.outEdges( documentId );
 		} else if ( direction === 'inbound' ) {
@@ -455,7 +474,8 @@ export const adb_edges_find = async ( db: Database, coll_name: string, documentI
 		} else {
 			edges = await coll.edges( documentId );
 		}
-		return edges;
+		return edges?.edges;
+
 	} catch ( e ) {
 		error( "ADB EDGE FIND ERROR: ", e.message, { documentId, direction } );
 		return [];
@@ -754,7 +774,7 @@ export const adb_find_one = async ( db: Database, coll_name: string, data: any, 
 export const adb_del_one = async ( db: Database, coll_name: string, data: any ) => {
 	const r = await adb_find_one( db, coll_name, data );
 	if ( !r ) return;
-	const coll: DocumentCollection = db.collection( coll_name );
+	const coll = _collection_get( db, coll_name, true ) as DocumentCollection | EdgeCollection;
 	if ( !coll ) return;
 
 	await coll.remove( r._id );
@@ -777,7 +797,7 @@ export const adb_del_all = async ( db: Database, coll_name: string, data: any ) 
 };
 
 export const adb_del_all_raw = async ( db: Database, coll_name: string, elems: any[] ) => {
-	const coll: DocumentCollection = db.collection( coll_name );
+	const coll = _collection_get( db, coll_name, true ) as DocumentCollection | EdgeCollection;
 	if ( !coll ) return [];
 
 	const ids: string[] = elems.map( ( el ) => el.id );
@@ -785,4 +805,44 @@ export const adb_del_all_raw = async ( db: Database, coll_name: string, elems: a
 	await Promise.all( elems.map( ( el ) => coll.remove( el._id ) ) );
 
 	return ids;
+};
+
+/**
+ * Removes all edges from an edge collection by _from or _to.
+ * @param db
+ * @param coll_name
+ * @param fromId
+ * @param toId
+ * @returns number of deleted edges
+ */
+export const adb_del_edges = async ( db: Database, coll_name: string, { fromId, toId }: { fromId?: string; toId?: string; } ) => {
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
+	if ( !coll ) return 0;
+
+	let filter = '';
+	const params: any = {};
+	if ( fromId && toId ) {
+		filter = 'FILTER e._from == @fromId AND e._to == @toId';
+		params.fromId = fromId;
+		params.toId = toId;
+	} else if ( fromId ) {
+		filter = 'FILTER e._from == @fromId';
+		params.fromId = fromId;
+	} else if ( toId ) {
+		filter = 'FILTER e._to == @toId';
+		params.toId = toId;
+	} else {
+		return 0;
+	}
+
+	const query = `
+        FOR e IN ${ coll_name }
+            ${ filter }
+            REMOVE e IN ${ coll_name }
+        	RETURN OLD._id
+    `;
+
+	const res = await db.query( query, params );
+	const removed = await res.all();
+	return removed.length;
 };
