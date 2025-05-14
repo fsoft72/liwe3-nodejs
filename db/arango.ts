@@ -21,12 +21,13 @@ export interface QueryOptions {
 }
 
 export interface DBCollectionIndex {
-	type: "hash" | "persistent" | "skiplist" | "ttl" | "geo" | "fulltext";
+	type: "persistent";
 	name?: string;
 	fields: string[];
-	unique: boolean;
+	unique?: boolean;
 	sparse?: boolean;
 	deduplicate?: boolean;
+	inBackground?: boolean;
 }
 
 export interface DBCollectionCreateOptions {
@@ -66,10 +67,10 @@ const _check_default_analyzers = async ( db: Database ) => {
 };
 
 // gets a collection by its name, returns null if it does not exist
-const _collection_get = ( db: Database, coll_name: string, raise: boolean = true, isEdge: boolean = false ): DocumentCollection | EdgeCollection => {
+const _collection_get = ( db: Database, coll_name: string, raise: boolean = true ): DocumentCollection | EdgeCollection => {
 	if ( !db ) return null;
 
-	const coll = isEdge ? db.edgeCollection( coll_name ) : db.collection( coll_name );
+	const coll = db.collection( coll_name );
 
 	if ( !coll && raise ) throw ( new Error( `Collection ${ coll_name } does not exist` ) );
 
@@ -172,7 +173,7 @@ export const adb_collection_create = async ( db: Database, name: string, options
 	const isEdge = !!options?.edge;
 
 	if ( options?.drop ) {
-		coll = _collection_get( db, name, false, isEdge );
+		coll = _collection_get( db, name, false );
 		if ( coll ) {
 			try {
 				await coll.drop();
@@ -189,7 +190,7 @@ export const adb_collection_create = async ( db: Database, name: string, options
 			await coll.ensureIndex( { type: "persistent", fields: [ "updated" ], unique: false } );
 		}
 	} catch ( e ) {
-		coll = isEdge ? db.edgeCollection( name ) : db.collection( name );
+		coll = db.collection( name );
 	}
 
 	return coll;
@@ -409,7 +410,7 @@ export const adb_query_count = async ( db: Database, query: string, params: any 
 export const adb_edge_create = async ( db: Database, coll_name: string, fromId: string, toId: string, data: any = {} ): Promise<any> => {
 	if ( !db ) return null;
 
-	const coll = _collection_get( db, coll_name, true, true ) as EdgeCollection;
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
 	if ( !coll ) return null;
 
 	const d = new Date();
@@ -442,19 +443,19 @@ export const adb_edge_create = async ( db: Database, coll_name: string, fromId: 
 export const adb_edges_find = async ( db: Database, coll_name: string, documentId: string, direction: 'outbound' | 'inbound' | 'any' = 'any' ): Promise<any[]> => {
 	if ( !db ) return [];
 
-	const coll = _collection_get( db, coll_name, true, true ) as EdgeCollection;
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
 	if ( !coll ) return [];
 
 	try {
-		let edges;
+		let edges: [];
 		if ( direction === 'outbound' ) {
-			edges = await coll.outbound( documentId );
+			edges = await coll.outEdges( documentId );
 		} else if ( direction === 'inbound' ) {
-			edges = await coll.inbound( documentId );
+			edges = await coll.inEdges( documentId );
 		} else {
 			edges = await coll.edges( documentId );
 		}
-		return await edges.all();
+		return edges;
 	} catch ( e ) {
 		error( "ADB EDGE FIND ERROR: ", e.message, { documentId, direction } );
 		return [];
@@ -509,7 +510,7 @@ export const adb_collection_init = async ( db: Database, name: string, idx: DBCo
 		await Promise.all( idx.map( async ( p ) => {
 			const fields = p.fields.join( '_' ).replace( "[*]", "" );
 			p.name = `idx_${ name }_${ fields }`;
-
+			// @ts-ignore
 			if ( p.type != 'fulltext' ) {
 				try {
 					await coll.ensureIndex( p );
@@ -519,6 +520,7 @@ export const adb_collection_init = async ( db: Database, name: string, idx: DBCo
 			}
 
 			// Fulltext index handling
+			// @ts-ignore
 			if ( p.type == 'fulltext' ) {
 				ft_fields[ fields ] = {
 					"analyzers": [ "norm_it", "identity" ],
