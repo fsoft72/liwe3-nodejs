@@ -498,8 +498,8 @@ export const adb_edges_find = async ( db: Database, coll_name: string, document:
 		} else {
 			edges = await coll.edges( documentId );
 		}
-		return edges?.edges;
 
+		return edges?.edges;
 	} catch ( e ) {
 		error( "ADB EDGE FIND ERROR: ", e.message, { documentId, direction } );
 		return [];
