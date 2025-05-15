@@ -186,13 +186,11 @@ export const adb_collection_create = async ( db: Database, name: string, options
 	try {
 		if ( isEdge ) {
 			coll = await db.createEdgeCollection( name );
-			await coll.ensureIndex( { type: "persistent", fields: [ "_from" ], unique: false } );
-			await coll.ensureIndex( { type: "persistent", fields: [ "_to" ], unique: false } );
 		} else {
 			coll = await db.createCollection( name );
-			await coll.ensureIndex( { type: "persistent", fields: [ "created" ], unique: false } );
-			await coll.ensureIndex( { type: "persistent", fields: [ "updated" ], unique: false } );
 		}
+		await coll.ensureIndex( { type: "persistent", fields: [ "created" ], unique: false } );
+		await coll.ensureIndex( { type: "persistent", fields: [ "updated" ], unique: false } );
 	} catch ( e ) {
 		coll = db.collection( name );
 	}
@@ -411,8 +409,16 @@ export const adb_query_count = async ( db: Database, query: string, params: any 
  * @param data       Additional edge data
  * @returns          The created edge
  */
-export const adb_edge_create = async ( db: Database, coll_name: string, fromId: string, toId: string, data: any = {} ): Promise<any> => {
+export const adb_edge_create = async ( db: Database, coll_name: string, from: any, to: any, data: any = {} ): Promise<any> => {
 	if ( !db ) return null;
+
+	const fromId = from._id;
+	const toId = to._id;
+
+	if ( !fromId || !toId ) {
+		error( "ADB EDGE ERROR: ", "fromId or toId is null", { from, to, data } );
+		return null;
+	}
 
 	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
 	if ( !coll ) return null;
@@ -444,9 +450,21 @@ export const adb_edge_create = async ( db: Database, coll_name: string, fromId: 
  * @param data       Additional edge data
  * @returns         The updated edge
  */
-export const adb_edge_update = async ( db: Database, coll_name: string, edgeId: string, data: any ) => {
+export const adb_edge_update = async ( db: Database, coll_name: string, edge: any, data: any ) => {
+
+	const edgeId = edge._id;
+	if ( !edgeId ) {
+		error( "ADB EDGE ERROR: ", "edgeId is null", { edge, data } );
+		return null;
+	}
+
 	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
 	if ( !coll ) return null;
+	const d = new Date();
+	data = {
+		...data,
+		updated: d
+	};
 	return await coll.update( edgeId, data, { returnNew: true } );
 };
 /**
@@ -458,8 +476,14 @@ export const adb_edge_update = async ( db: Database, coll_name: string, edgeId: 
  * @param direction  Direction of the edges ('outbound', 'inbound', or 'any')
  * @returns          Array of edges
  */
-export const adb_edges_find = async ( db: Database, coll_name: string, documentId: string, direction: 'outbound' | 'inbound' | 'any' = 'any' ): Promise<any[]> => {
+export const adb_edges_find = async ( db: Database, coll_name: string, document: any, direction: 'outbound' | 'inbound' | 'any' = 'any' ): Promise<any[]> => {
 	if ( !db ) return [];
+
+	const documentId = document._id;
+	if ( !documentId ) {
+		error( "ADB EDGE FIND ERROR: ", "documentId is null", { document, direction } );
+		return [];
+	}
 
 	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
 	if ( !coll ) return [];
@@ -486,19 +510,20 @@ export const adb_edges_find = async ( db: Database, coll_name: string, documentI
  * Performs a graph traversal starting from a document
  *
  * @param db           ArangoDB database
+ * @param coll_name	   Name of the edge collection
  * @param startVertex  Start vertex document ID
- * @param edgeCollection Name of the edge collection
  * @param direction    Direction of traversal ('outbound', 'inbound', 'any')
  * @param options      Traversal options (min/max depth, etc.)
  * @returns            Traversal results
  */
-export const adb_graph_traverse = async ( db: Database, startVertex: string, edgeCollection: string, direction: 'outbound' | 'inbound' | 'any' = 'outbound', options: any = {} ): Promise<any> => {
+export const adb_graph_traverse = async ( db: Database, coll_name: string, startVertex: any, direction: 'outbound' | 'inbound' | 'any' = 'outbound', options: any = {} ): Promise<any> => {
 	if ( !db ) return { vertices: [], paths: [] };
 
+	const startId = startVertex._id;
 	const query = `
     FOR v, e, p IN ${ options.minDepth || 1 }..${ options.maxDepth || 1 } ${ direction }
-    ${ startVertex }
-    ${ edgeCollection }
+    ${ startId }
+    ${ coll_name }
     RETURN { vertex: v, edge: e, path: p }
   `;
 
@@ -815,9 +840,12 @@ export const adb_del_all_raw = async ( db: Database, coll_name: string, elems: a
  * @param toId
  * @returns number of deleted edges
  */
-export const adb_del_edges = async ( db: Database, coll_name: string, { fromId, toId }: { fromId?: string; toId?: string; } ) => {
+export const adb_del_edges = async ( db: Database, coll_name: string, from?: any, to?: any ) => {
 	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
 	if ( !coll ) return 0;
+
+	const fromId = from?._id;
+	const toId = to?._id;
 
 	let filter = '';
 	const params: any = {};
