@@ -477,11 +477,10 @@ export const adb_edge_update = async ( db: Database, coll_name: string, edge: an
  * @param direction  Direction of the edges ('outbound', 'inbound', or 'any')
  * @returns          Array of edges
  */
-/*
-export const adb_edges_find = async ( db: Database, coll_name: string, document: any, direction: 'outbound' | 'inbound' | 'any' = 'any' ): Promise<any[]> => {
+export const adb_edges_find = async ( db: Database, coll_name: string, document: any, direction: 'out' | 'in' | 'any' = 'any' ): Promise<any[]> => {
 	if ( !db ) return [];
 
-	const documentId = document._id;
+	const documentId: string = document._id;
 	if ( !documentId ) {
 		error( "ADB EDGE FIND ERROR: ", "documentId is null", { document, direction } );
 		return [];
@@ -490,52 +489,31 @@ export const adb_edges_find = async ( db: Database, coll_name: string, document:
 	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
 	if ( !coll ) return [];
 
-	let edges: DocumentEdgesResult<any>;
-
-	try {
-		console.log( "ADB EDGE FIND: ", { documentId, direction } );
-		if ( direction === 'outbound' ) {
-			edges = await coll.outEdges( documentId );
-		} else if ( direction === 'inbound' ) {
-			edges = await coll.inEdges( documentId );
-		} else {
-			edges = await coll.edges( documentId );
-		}
-
-		return edges?.edges;
-	} catch ( e ) {
-		error( "ADB EDGE FIND ERROR: ", e.response.parsedBody, { documentId, direction } );
-		return [];
-	}
-};
-*/
-export const adb_edges_find = async ( db: Database, coll_name: string, document: any, direction: 'out' | 'in' | 'any' = 'any' ): Promise<any[]> => {
-	if ( !db ) return [];
-
-	const documentId = document._id;
-	if ( !documentId ) {
-		error( "ADB EDGE FIND ERROR: ", "documentId is null", { document, direction } );
-		return [];
-	}
-
-	try {
-		console.log( "ADB EDGE FIND: ", { documentId, direction } );
-
-		let query: string;
-		let bindVars = { vertex: documentId, '@collection': coll_name };
-
-		if ( direction === 'out' ) {
-			query = `FOR edge IN @@collection FILTER edge._from == @vertex RETURN edge`;
-		} else if ( direction === 'in' ) {
-			query = `FOR edge IN @@collection FILTER edge._to == @vertex RETURN edge`;
-		} else { // 'any'
-			query = `FOR edge IN @@collection FILTER edge._from == @vertex OR edge._to == @vertex RETURN edge`;
-		}
+	// FIXME: This is a workaround for the fact that edges methods return an error ('<direction> must by any, in, or out, not: undefined')
+	async function _edges ( id: string ) {
+		const bindVars = { vertex: id, '@collection': coll_name };
+		const query = `FOR edge IN @@collection FILTER edge._from == @vertex OR edge._to == @vertex RETURN edge`;
 
 		const cursor = await db.query( query, bindVars );
 		const edges = await cursor.all();
 
 		return edges;
+	};
+
+	let edges: DocumentEdgesResult<any>;
+
+	try {
+		console.log( "ADB EDGE FIND: ", { documentId, direction } );
+
+		if ( direction === 'out' ) {
+			edges = await coll.outEdges( documentId );
+			return edges?.edges;
+		} else if ( direction === 'in' ) {
+			edges = await coll.inEdges( documentId );
+			return edges?.edges;
+		} else {
+			return await _edges( documentId );
+		}
 	} catch ( e ) {
 		error( "ADB EDGE FIND ERROR: ", e.response?.parsedBody || e, { documentId, direction } );
 		return [];
