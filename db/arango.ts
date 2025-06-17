@@ -189,6 +189,7 @@ export const adb_collection_create = async ( db: Database, name: string, options
 		} else {
 			coll = await db.createCollection( name );
 		}
+
 		await coll.ensureIndex( { type: "persistent", fields: [ "created" ], unique: false } );
 		await coll.ensureIndex( { type: "persistent", fields: [ "updated" ], unique: false } );
 	} catch ( e ) {
@@ -472,10 +473,11 @@ export const adb_edge_update = async ( db: Database, coll_name: string, edge: an
  *
  * @param db         ArangoDB database
  * @param coll_name  Name of the edge collection
- * @param documentId ID of the document to find edges for
+ * @param document   Document to find edges for
  * @param direction  Direction of the edges ('outbound', 'inbound', or 'any')
  * @returns          Array of edges
  */
+/*
 export const adb_edges_find = async ( db: Database, coll_name: string, document: any, direction: 'outbound' | 'inbound' | 'any' = 'any' ): Promise<any[]> => {
 	if ( !db ) return [];
 
@@ -491,6 +493,7 @@ export const adb_edges_find = async ( db: Database, coll_name: string, document:
 	let edges: DocumentEdgesResult<any>;
 
 	try {
+		console.log( "ADB EDGE FIND: ", { documentId, direction } );
 		if ( direction === 'outbound' ) {
 			edges = await coll.outEdges( documentId );
 		} else if ( direction === 'inbound' ) {
@@ -501,7 +504,40 @@ export const adb_edges_find = async ( db: Database, coll_name: string, document:
 
 		return edges?.edges;
 	} catch ( e ) {
-		error( "ADB EDGE FIND ERROR: ", e.message, { documentId, direction } );
+		error( "ADB EDGE FIND ERROR: ", e.response.parsedBody, { documentId, direction } );
+		return [];
+	}
+};
+*/
+export const adb_edges_find = async ( db: Database, coll_name: string, document: any, direction: 'out' | 'in' | 'any' = 'any' ): Promise<any[]> => {
+	if ( !db ) return [];
+
+	const documentId = document._id;
+	if ( !documentId ) {
+		error( "ADB EDGE FIND ERROR: ", "documentId is null", { document, direction } );
+		return [];
+	}
+
+	try {
+		console.log( "ADB EDGE FIND: ", { documentId, direction } );
+
+		let query: string;
+		let bindVars = { vertex: documentId, '@collection': coll_name };
+
+		if ( direction === 'out' ) {
+			query = `FOR edge IN @@collection FILTER edge._from == @vertex RETURN edge`;
+		} else if ( direction === 'in' ) {
+			query = `FOR edge IN @@collection FILTER edge._to == @vertex RETURN edge`;
+		} else { // 'any'
+			query = `FOR edge IN @@collection FILTER edge._from == @vertex OR edge._to == @vertex RETURN edge`;
+		}
+
+		const cursor = await db.query( query, bindVars );
+		const edges = await cursor.all();
+
+		return edges;
+	} catch ( e ) {
+		error( "ADB EDGE FIND ERROR: ", e.response?.parsedBody || e, { documentId, direction } );
 		return [];
 	}
 };
