@@ -53,6 +53,23 @@ interface CollectionFindAllOptions {
 	count?: boolean;
 }
 
+export interface QueryJoinSpec {
+	/** Collection name */
+	coll_name: string;
+	/** Filter data for the collection */
+	data?: any;
+	/** Options for the query */
+	options?: CollectionFindAllOptions;
+	/** Placeholder variable name for this collection (defaults to o1, o2, etc.) */
+	prefix?: string;
+	/** Join condition to connect with previous collections */
+	join_condition?: string;
+	/** Alias for the result object */
+	alias?: string;
+	/** Fields to include in the result */
+	fields?: string[];
+}
+
 const _check_default_analyzers = async ( db: Database ) => {
 	const analyzers = [ 'norm_it', 'norm_en' ];
 
@@ -77,6 +94,31 @@ const _collection_get = ( db: Database, coll_name: string, raise: boolean = true
 	if ( !coll && raise ) throw ( new Error( `Collection ${ coll_name } does not exist` ) );
 
 	return coll;
+};
+
+const _prep_aql_query = ( coll_name: string, data: any = undefined, options?: CollectionFindAllOptions, prefix: string = 'o' ) => {
+	const [ filters, values ] = adb_prepare_filters( prefix, data );
+	let limit = '';
+	let { skip = 0, rows = 0 } = options || {};
+	const _sort: string[] = [];
+	let sort = "";
+
+	if ( skip && !rows ) rows = skip + 9999999;
+
+	options?.sort && options.sort.forEach( ( opt: SortOptions ) => {
+		if ( opt.desc )
+			_sort.push( `${ prefix }.${ opt.field } DESC` );
+		else
+			_sort.push( `${ prefix }.${ opt.field }` );
+	} );
+
+	if ( _sort.length )
+		sort = `SORT ${ _sort.join( ', ' ) }`;
+
+	if ( rows > 0 )
+		limit = `\n   LIMIT ${ skip }, ${ rows }`;
+
+	return [ `\nFOR ${ prefix } IN ${ coll_name }\n  ${ sort } ${ filters } ${ limit }\n`, values ];
 };
 
 /**
@@ -704,7 +746,6 @@ export const adb_prepare_filters = ( prefix: string, data: any, extra_values?: a
 	return [ [ ...searchers, ...filters ].join( '\n    ' ) + limit, values ];
 };
 
-
 /**
  * Counts the number of documents in a collection
  *
@@ -733,28 +774,9 @@ export const adb_count = async ( db: Database, coll_name: string, data: any ) =>
 export const adb_find_all = async ( db: Database, coll_name: string, data: any = undefined, data_type: any = undefined, options?: CollectionFindAllOptions ) => {  //rows = 0, skip = 0 ) => {
 	if ( !data ) data = {};
 
-	const [ filters, values ] = adb_prepare_filters( 'o', data );
-	let limit = '';
-	let { skip = 0, rows = 0 } = options || {};
-	const _sort: string[] = [];
-	let sort = "";
+	const [ query, values ] = _prep_aql_query( coll_name, data, options );
 
-	if ( skip && !rows ) rows = skip + 9999999;
-
-	options?.sort && options.sort.forEach( ( opt: SortOptions ) => {
-		if ( opt.desc )
-			_sort.push( `o.${ opt.field } DESC` );
-		else
-			_sort.push( `o.${ opt.field }` );
-	} );
-
-	if ( _sort.length )
-		sort = `SORT ${ _sort.join( ', ' ) }`;
-
-	if ( rows > 0 )
-		limit = `\n   LIMIT ${ skip }, ${ rows }`;
-
-	return await adb_query_all( db, `\nFOR o IN ${ coll_name }\n  ${ sort } ${ filters } ${ limit } \nRETURN o`, values, data_type, { count: options?.count } );
+	return await adb_query_all( db, `${ query }RETURN o`, values, data_type, { count: options?.count } );
 };
 
 export const adb_find_by_affinity = async ( db: Database, coll_name: string, tags: string[], skip_ids: string[] = [] ) => {
@@ -801,6 +823,125 @@ export const adb_find_one = async ( db: Database, coll_name: string, data: any, 
 	if ( !res || !res.length ) return null;
 
 	return res[ 0 ];
+};
+
+/**
+ * Builds an AQL query with joins based on multiple collection specifications
+ *
+ * @param db          ArangoDB database
+ * @param specs       Array of query specifications for each collection to join
+ * @param data_type   If present, result list will be filtered before returning
+ * @param options     Global query options
+ * @returns           Query results
+ */
+export const adb_find_with_joins = async ( db: Database, specs: QueryJoinSpec[], data_type?: any, options?: QueryOptions ) => {
+	if ( !db || !specs || specs.length === 0 ) return [];
+
+	const all_values: any = {};
+	const query_parts: string[] = [];
+	const return_parts: string[] = [];
+	let global_sort = '';
+	let global_limit = '';
+
+	function _build_return_object ( spec: QueryJoinSpec ) {
+		const prefix = spec.prefix;
+
+		if ( spec.fields && spec.fields.length > 0 ) {
+			const include_fields: string[] = [];
+			const exclude_fields: string[] = [];
+
+			// Separate include and exclude fields
+			spec.fields.forEach( f => {
+				if ( f.startsWith( '-' ) ) {
+					exclude_fields.push( f.substring( 1 ) );
+				} else {
+					include_fields.push( f );
+				}
+			} );
+
+			if ( include_fields.length > 0 ) {
+				const fields_str = include_fields.map( f => `"${ f }"` ).join( ', ' );
+				return `KEEP(${ prefix }, ${ fields_str })`;
+			} else if ( exclude_fields.length > 0 ) {
+				const exclude_str = exclude_fields.map( f => `"${ f }"` ).join( ', ' );
+				return `UNSET(${ prefix }, ${ exclude_str })`;
+			} else {
+				// Return the whole object if no valid fields
+				return `${ prefix }`;
+			}
+		} else {
+			// Return the whole object
+			return `${ prefix }`;
+		}
+	};
+
+	// Process each collection specification
+	specs.forEach( ( spec, index ) => {
+		const prefix = spec.prefix || `o${ index + 1 }`;
+		const alias = spec.alias || prefix;
+
+		// Generate query parts for this collection
+		const [ query, values ] = _prep_aql_query(
+			spec.coll_name,
+			spec.data,
+			spec.options,
+			prefix
+		);
+
+		Object.assign( all_values, values );
+
+		const query_lines = query.split( '\n' ).filter( ( line: string ) => line.trim() );
+
+		query_lines.forEach( ( line: string ) => {
+			const trimmed = line.trim();
+			if ( trimmed.startsWith( 'FOR ' ) ) {
+				query_parts.push( trimmed );
+			} else if ( trimmed.startsWith( 'SORT ' ) && !global_sort ) {
+				// Use the first SORT clause as global sort
+				global_sort = trimmed;
+			} else if ( trimmed.startsWith( 'LIMIT ' ) && !global_limit ) {
+				// Use the first LIMIT clause as global limit
+				global_limit = trimmed;
+			} else if ( trimmed.startsWith( 'FILTER ' ) || trimmed.startsWith( 'SEARCH ' ) ) {
+				query_parts.push( `  ${ trimmed }` );
+			}
+		} );
+
+		// Add join condition if specified
+		if ( spec.join_condition ) {
+			query_parts.push( `  FILTER ${ spec.join_condition }` );
+		}
+
+		// Add to return parts
+		return_parts.push( _build_return_object( spec ) );
+	} );
+
+	// Handle global options
+	if ( options?.skip || options?.rows ) {
+		const skip = options.skip || 0;
+		const rows = options.rows || skip + 9999999;
+		global_limit = `LIMIT ${ skip }, ${ rows }`;
+	}
+
+	// Build final query
+	const query_string = [
+		...query_parts,
+		global_sort,
+		global_limit,
+		`RETURN MERGE(${ return_parts.join( ', ' ) })`
+	].filter( Boolean ).join( '\n' );
+
+	if ( cfg.debug?.query_dump ) {
+		console.log( "AQL JOIN query: ", query_string, all_values );
+	}
+
+	try {
+		const result = await adb_query_all( db, query_string, all_values, data_type, options );
+		return result;
+	} catch ( e ) {
+		error( "ADB JOIN ERROR: ", e.message );
+		return [];
+	}
 };
 
 /**
