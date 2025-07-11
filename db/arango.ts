@@ -64,8 +64,6 @@ export interface QueryJoinSpec {
 	prefix?: string;
 	/** Join condition to connect with previous collections */
 	join_condition?: string;
-	/** Alias for the result object */
-	alias?: string;
 	/** Fields to include in the result */
 	fields?: string[];
 }
@@ -840,6 +838,7 @@ export const adb_find_with_joins = async ( db: Database, specs: QueryJoinSpec[],
 	const all_values: any = {};
 	const query_parts: string[] = [];
 	const return_parts: string[] = [];
+	const renamed_fields: string[] = [];
 	let global_sort = '';
 	let global_limit = '';
 
@@ -855,7 +854,13 @@ export const adb_find_with_joins = async ( db: Database, specs: QueryJoinSpec[],
 				if ( f.startsWith( '-' ) ) {
 					exclude_fields.push( f.substring( 1 ) );
 				} else {
-					include_fields.push( f );
+					if ( f.includes( ':' ) ) {
+						const parts = f.split( ':' );
+						renamed_fields.push( `${ parts[ 1 ].trim() }: ${ prefix }.${ parts[ 0 ].trim() }` );
+						exclude_fields.push( parts[ 0 ].trim() );
+					} else {
+						include_fields.push( f );
+					}
 				}
 			} );
 
@@ -878,7 +883,6 @@ export const adb_find_with_joins = async ( db: Database, specs: QueryJoinSpec[],
 	// Process each collection specification
 	specs.forEach( ( spec, index ) => {
 		const prefix = spec.prefix || `o${ index + 1 }`;
-		const alias = spec.alias || prefix;
 
 		// Generate query parts for this collection
 		const [ query, values ] = _prep_aql_query(
@@ -928,7 +932,7 @@ export const adb_find_with_joins = async ( db: Database, specs: QueryJoinSpec[],
 		...query_parts,
 		global_sort,
 		global_limit,
-		`RETURN MERGE(${ return_parts.join( ', ' ) })`
+		`RETURN MERGE(${ return_parts.join( ', ' ) } ${ renamed_fields.length > 0 ? `, { ${ renamed_fields.join( ', ' ) }}` : '' })`
 	].filter( Boolean ).join( '\n' );
 
 	if ( cfg.debug?.query_dump ) {
