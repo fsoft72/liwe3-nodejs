@@ -856,8 +856,13 @@ export const adb_find_with_joins = async ( db: Database, specs: QueryJoinSpec[],
 				} else {
 					if ( f.includes( ':' ) ) {
 						const parts = f.split( ':' );
-						renamed_fields.push( `${ parts[ 1 ].trim() }: ${ prefix }.${ parts[ 0 ].trim() }` );
-						exclude_fields.push( parts[ 0 ].trim() );
+						if ( parts.length !== 2 ) {
+							console.error( "ADB JOIN ERROR: Invalid field format in join spec", f );
+							return;
+						}
+						const trimmed = parts.map( p => p.trim() );
+						renamed_fields.push( `${ trimmed[ 1 ] }: ${ prefix }.${ trimmed[ 0 ] }` );
+						exclude_fields.push( trimmed[ 0 ] );
 					} else {
 						include_fields.push( f );
 					}
