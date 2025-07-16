@@ -445,8 +445,8 @@ export const adb_query_count = async ( db: Database, query: string, params: any 
  *
  * @param db         ArangoDB database
  * @param coll_name  Name of the edge collection
- * @param fromId     ID of the source document
- * @param toId       ID of the target document
+ * @param from		 Source document
+ * @param to       	 Target document
  * @param data       Additional edge data
  * @returns          The created edge
  */
@@ -529,7 +529,7 @@ export const adb_edges_find = async ( db: Database, coll_name: string, document:
 	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
 	if ( !coll ) return [];
 
-	// FIXME: This is a workaround for the fact that edges methods return an error ('<direction> must by any, in, or out, not: undefined')
+	// FIXME: This is a workaround because edges methods return an error ('<direction> must by any, in, or out, not: undefined')
 	async function _edges ( id: string ) {
 		const bindVars = { vertex: id, '@collection': coll_name };
 		const query = `FOR edge IN @@collection FILTER edge._from == @vertex OR edge._to == @vertex RETURN edge`;
@@ -561,22 +561,49 @@ export const adb_edges_find = async ( db: Database, coll_name: string, document:
 };
 
 /**
+ * Removes an edge from the collection
+ *
+ * @param db         ArangoDB database
+ * @param coll_name  Name of the edge collection
+ * @param edge       Edge document to remove
+ * @returns          True if the edge was removed, false otherwise
+ */
+export const adb_edge_remove = async ( db: Database, coll_name: string, edge: any ): Promise<boolean> => {
+	const edge_id = edge._id;
+	if ( !edge_id ) {
+		error( "ADB EDGE REMOVE ERROR: ", "edgeId is null", { edge } );
+		return false;
+	}
+
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
+	if ( !coll ) return false;
+
+	try {
+		await coll.remove( edge_id );
+		return true;
+	} catch ( e ) {
+		error( "ADB EDGE REMOVE ERROR: ", e.message, { edgeId: edge_id } );
+		return false;
+	}
+};
+
+/**
  * Performs a graph traversal starting from a document
  *
  * @param db           ArangoDB database
  * @param coll_name	   Name of the edge collection
- * @param startVertex  Start vertex document ID
+ * @param start_vertex  Start vertex document
  * @param direction    Direction of traversal ('outbound', 'inbound', 'any')
  * @param options      Traversal options (min/max depth, etc.)
  * @returns            Traversal results
  */
-export const adb_graph_traverse = async ( db: Database, coll_name: string, startVertex: any, direction: 'outbound' | 'inbound' | 'any' = 'outbound', options: any = {} ): Promise<any> => {
+export const adb_graph_traverse = async ( db: Database, coll_name: string, start_vertex: any, direction: 'outbound' | 'inbound' | 'any' = 'outbound', options: any = {} ): Promise<any> => {
 	if ( !db ) return { vertices: [], paths: [] };
 
-	const startId = startVertex._id;
+	const start_id = start_vertex._id;
 	const query = `
     FOR v, e, p IN ${ options.minDepth || 1 }..${ options.maxDepth || 1 } ${ direction }
-    ${ startId }
+    '${ start_id }'
     ${ coll_name }
     RETURN { vertex: v, edge: e, path: p }
   `;
