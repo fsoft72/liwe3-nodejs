@@ -19,6 +19,8 @@ export type LiWEError = {
   message: string;
   /** Optional error code for programmatic handling */
   code?: string;
+  /** Optional additional details about the error */
+  level?: 'info' | 'warning' | 'error';
 };
 
 /**
