@@ -346,7 +346,8 @@ export interface ILiweConfig {
 	features: {
 		reactions: boolean;
 		trace: boolean;
-		trace_ok: boolean;
+		trace_ok: boolean;  // If T, ok responses are logged
+		trace_error: boolean; // If T, error responses are logged
 		friend: boolean;
 		tags: boolean;
 		passport: boolean;
