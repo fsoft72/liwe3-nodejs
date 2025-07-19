@@ -102,11 +102,12 @@ export const responseSuccess = <T = any> ( data?: T, status = 200 ): LiWERespons
  * @template T - The type of data being returned
  * @param message - Error message
  * @param code - Optional error code
+ * @param level - Optional error level (defaults to 'error')
  * @param status - HTTP status code (defaults to 400)
  * @returns Error response object
  */
-export const responseError = <T = any> ( message: string, code?: string, status = 400 ): LiWEResponse<T> => {
-  return createResponse<T>( { message, code }, undefined, status );
+export const responseError = <T = any> ( message: string, code?: string, level: 'error' | 'warning' | 'info' = 'error', status = 400 ): LiWEResponse<T> => {
+  return createResponse<T>( { message, code, level }, undefined, status );
 };
 
 /**
