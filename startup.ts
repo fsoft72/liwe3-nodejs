@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import * as path from 'path';
-import * as express from 'express';
+import express from 'express';
 import * as bodyParser from 'body-parser';
 
 import * as fs from './fs';
@@ -12,7 +12,7 @@ import SSEServer from './sse';
 
 import { info, warn, colors, error } from './console_colors';
 // import { loc } from './locale';
-import * as fileUpload from 'express-fileupload';
+import fileUpload from 'express-fileupload';
 import { adb_init } from './db/arango';
 
 import { SocketIORouter } from './socketio';
