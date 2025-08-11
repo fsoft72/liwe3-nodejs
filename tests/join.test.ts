@@ -84,14 +84,14 @@ const factory = async () => {
 		{
 			coll_name: COLL_USERS,
 			prefix: 'u',
-			fields: [ '-_id', '-_key', '-_rev' ],
+			exclude: [ '_id', '_key', '_rev' ],
 		},
 		{
 			coll_name: COLL_PROFILES,
 			data: { enabled: true },
 			prefix: 'p',
 			join_condition: `u.id == p.id_user`,
-			fields: [ '-_id', '-_key', '-_rev' ],
+			exclude: [ '_id', '_key', '_rev' ],
 		}
 	];
 	const res01 = await a.adb_find_with_joins( db, join_specs01 );
