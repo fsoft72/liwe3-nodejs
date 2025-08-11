@@ -7,7 +7,9 @@ import { critical, error } from '../console_colors';
 
 import { config_load } from "../liwe";
 import { keys_filter } from "../utils";
-import { DocumentCollection } from 'arangojs/collections';
+import { DocumentCollection, EdgeCollection, } from 'arangojs/collections';
+import { ArangoApiResponse } from 'arangojs/connection';
+import { DocumentEdgesResult } from 'arangojs/documents';
 
 const cfg: ILiweConfig = config_load( 'data', {}, true, true );
 
@@ -21,17 +23,20 @@ export interface QueryOptions {
 }
 
 export interface DBCollectionIndex {
-	type: "hash" | "persistent" | "skiplist" | "ttl" | "geo" | "fulltext";
+	type: "persistent";
 	name?: string;
 	fields: string[];
-	unique: boolean;
+	unique?: boolean;
 	sparse?: boolean;
 	deduplicate?: boolean;
+	inBackground?: boolean;
 }
 
 export interface DBCollectionCreateOptions {
 	/** Set this to true if you want to drop the collection if it already exists. */
 	drop?: boolean;
+	/** Set this to true if you want to create an edge collection. */
+	edge?: boolean;
 }
 
 interface SortOptions {
@@ -46,6 +51,23 @@ interface CollectionFindAllOptions {
 
 	/** If T, the query will return also the count of documents */
 	count?: boolean;
+}
+
+export interface QueryJoinSpec {
+	/** Collection name */
+	coll_name: string;
+	/** Filter data for the collection */
+	data?: any;
+	/** Options for the query */
+	options?: CollectionFindAllOptions;
+	/** Placeholder variable name for this collection (defaults to o1, o2, etc.) */
+	prefix?: string;
+	/** Join condition to connect with previous collections */
+	join_condition?: string;
+	/** Fields to include in the result */
+	fields?: string[];
+	/** Fields to exclude from the result */
+	exclude?: string[];
 }
 
 const _check_default_analyzers = async ( db: Database ) => {
@@ -64,16 +86,40 @@ const _check_default_analyzers = async ( db: Database ) => {
 };
 
 // gets a collection by its name, returns null if it does not exist
-const _collection_get = ( db: Database, coll_name: string, raise: boolean = true ): DocumentCollection => {
+const _collection_get = ( db: Database, coll_name: string, raise: boolean = true ): DocumentCollection | EdgeCollection => {
 	if ( !db ) return null;
 
-	const coll: DocumentCollection = db.collection( coll_name );
+	const coll = db.collection( coll_name );
 
 	if ( !coll && raise ) throw ( new Error( `Collection ${ coll_name } does not exist` ) );
 
 	return coll;
 };
 
+const _prep_aql_query = ( coll_name: string, data: any = undefined, options?: CollectionFindAllOptions, prefix: string = 'o' ) => {
+	const [ filters, values ] = adb_prepare_filters( prefix, data );
+	let limit = '';
+	let { skip = 0, rows = 0 } = options || {};
+	const _sort: string[] = [];
+	let sort = "";
+
+	if ( skip && !rows ) rows = skip + 9999999;
+
+	options?.sort && options.sort.forEach( ( opt: SortOptions ) => {
+		if ( opt.desc )
+			_sort.push( `${ prefix }.${ opt.field } DESC` );
+		else
+			_sort.push( `${ prefix }.${ opt.field }` );
+	} );
+
+	if ( _sort.length )
+		sort = `SORT ${ _sort.join( ', ' ) }`;
+
+	if ( rows > 0 )
+		limit = `\n   LIMIT ${ skip }, ${ rows }`;
+
+	return [ `\nFOR ${ prefix } IN ${ coll_name }\n  ${ sort } ${ filters } ${ limit }\n`, values ];
+};
 
 /**
  * ArangoDB database initialization
@@ -157,20 +203,21 @@ export const adb_db_drop = async ( adb: Database, name: string ): Promise<boolea
 /**
  * Creates a collection if it does not exist
  *
- * @param db 		ArangoDB database
- * @param name 		Name of the collection to create
- * @param options 	Options
+ * @param db        ArangoDB database
+ * @param name      Name of the collection to create
+ * @param options   Options
  *
- * @returns 		ArangoDB collection
- * @throws 			ArangoError
+ * @returns         ArangoDB collection (either DocumentCollection or EdgeCollection)
+ * @throws          ArangoError
  *
  */
-export const adb_collection_create = async ( db: Database, name: string, options: DBCollectionCreateOptions = null ): Promise<any> => {
+export const adb_collection_create = async ( db: Database, name: string, options: DBCollectionCreateOptions = null ): Promise<DocumentCollection | EdgeCollection> => {
 	if ( !db ) return null;
 	let coll;
+	const isEdge = !!options?.edge;
 
 	if ( options?.drop ) {
-		coll = await db.collection( name );
+		coll = _collection_get( db, name, false );
 		if ( coll ) {
 			try {
 				await coll.drop();
@@ -179,11 +226,16 @@ export const adb_collection_create = async ( db: Database, name: string, options
 	}
 
 	try {
-		coll = await db.createCollection( name );
+		if ( isEdge ) {
+			coll = await db.createEdgeCollection( name );
+		} else {
+			coll = await db.createCollection( name );
+		}
+
 		await coll.ensureIndex( { type: "persistent", fields: [ "created" ], unique: false } );
 		await coll.ensureIndex( { type: "persistent", fields: [ "updated" ], unique: false } );
 	} catch ( e ) {
-		coll = await db.collection( name );
+		coll = db.collection( name );
 	}
 
 	return coll;
@@ -391,16 +443,192 @@ export const adb_query_count = async ( db: Database, query: string, params: any 
 };
 
 /**
+ * Creates an edge between two documents
+ *
+ * @param db         ArangoDB database
+ * @param coll_name  Name of the edge collection
+ * @param from		 Source document
+ * @param to       	 Target document
+ * @param data       Additional edge data
+ * @returns          The created edge
+ */
+export const adb_edge_create = async ( db: Database, coll_name: string, from: any, to: any, data: any = {} ): Promise<any> => {
+	if ( !db ) return null;
+
+	const fromId = from._id;
+	const toId = to._id;
+
+	if ( !fromId || !toId ) {
+		error( "ADB EDGE ERROR: ", "fromId or toId is null", { from, to, data } );
+		return null;
+	}
+
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
+	if ( !coll ) return null;
+
+	const d = new Date();
+	data = {
+		...data,
+		_from: fromId,
+		_to: toId,
+		created: d,
+		updated: d
+	};
+
+	try {
+		const res = await coll.save( data, { returnNew: true } );
+		return res.new || res;
+	} catch ( e ) {
+		error( "ADB EDGE ERROR: ", e.message, { fromId, toId, data } );
+		return null;
+	}
+};
+
+/**
+ * Updates an edge by its _id.
+ *
+ * @param db         ArangoDB database
+ * @param coll_name  Name of the edge collection
+ * @param edgeId     ID of the edge to update
+ * @param data       Additional edge data
+ * @returns         The updated edge
+ */
+export const adb_edge_update = async ( db: Database, coll_name: string, edge: any, data: any ) => {
+
+	const edgeId = edge._id;
+	if ( !edgeId ) {
+		error( "ADB EDGE ERROR: ", "edgeId is null", { edge, data } );
+		return null;
+	}
+
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
+	if ( !coll ) return null;
+	const d = new Date();
+	data = {
+		...data,
+		updated: d
+	};
+	return await coll.update( edgeId, data, { returnNew: true } );
+};
+/**
+ * Finds edges connected to a document
+ *
+ * @param db         ArangoDB database
+ * @param coll_name  Name of the edge collection
+ * @param document   Document to find edges for
+ * @param direction  Direction of the edges ('outbound', 'inbound', or 'any')
+ * @returns          Array of edges
+ */
+export const adb_edges_find = async ( db: Database, coll_name: string, document: any, direction: 'out' | 'in' | 'any' = 'any' ): Promise<any[]> => {
+	if ( !db ) return [];
+
+	const documentId: string = document._id;
+	if ( !documentId ) {
+		error( "ADB EDGE FIND ERROR: ", "documentId is null", { document, direction } );
+		return [];
+	}
+
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
+	if ( !coll ) return [];
+
+	// FIXME: This is a workaround because edges methods return an error ('<direction> must by any, in, or out, not: undefined')
+	async function _edges ( id: string ) {
+		const bindVars = { vertex: id, '@collection': coll_name };
+		const query = `FOR edge IN @@collection FILTER edge._from == @vertex OR edge._to == @vertex RETURN edge`;
+
+		const cursor = await db.query( query, bindVars );
+		const edges = await cursor.all();
+
+		return edges;
+	};
+
+	let edges: DocumentEdgesResult<any>;
+
+	try {
+		console.log( "ADB EDGE FIND: ", { documentId, direction } );
+
+		if ( direction === 'out' ) {
+			edges = await coll.outEdges( documentId );
+			return edges?.edges;
+		} else if ( direction === 'in' ) {
+			edges = await coll.inEdges( documentId );
+			return edges?.edges;
+		} else {
+			return await _edges( documentId );
+		}
+	} catch ( e ) {
+		error( "ADB EDGE FIND ERROR: ", e.response?.parsedBody || e, { documentId, direction } );
+		return [];
+	}
+};
+
+/**
+ * Removes an edge from the collection
+ *
+ * @param db         ArangoDB database
+ * @param coll_name  Name of the edge collection
+ * @param edge       Edge document to remove
+ * @returns          True if the edge was removed, false otherwise
+ */
+export const adb_edge_remove = async ( db: Database, coll_name: string, edge: any ): Promise<boolean> => {
+	const edge_id = edge._id;
+	if ( !edge_id ) {
+		error( "ADB EDGE REMOVE ERROR: ", "edgeId is null", { edge } );
+		return false;
+	}
+
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
+	if ( !coll ) return false;
+
+	try {
+		await coll.remove( edge_id );
+		return true;
+	} catch ( e ) {
+		error( "ADB EDGE REMOVE ERROR: ", e.message, { edgeId: edge_id } );
+		return false;
+	}
+};
+
+/**
+ * Performs a graph traversal starting from a document
+ *
+ * @param db           ArangoDB database
+ * @param coll_name	   Name of the edge collection
+ * @param start_vertex  Start vertex document
+ * @param direction    Direction of traversal ('outbound', 'inbound', 'any')
+ * @param options      Traversal options (min/max depth, etc.)
+ * @returns            Traversal results
+ */
+export const adb_graph_traverse = async ( db: Database, coll_name: string, start_vertex: any, direction: 'outbound' | 'inbound' | 'any' = 'outbound', options: any = {} ): Promise<any> => {
+	if ( !db ) return { vertices: [], paths: [] };
+
+	const start_id = start_vertex._id;
+	const query = `
+    FOR v, e, p IN ${ options.minDepth || 1 }..${ options.maxDepth || 1 } ${ direction }
+    '${ start_id }'
+    ${ coll_name }
+    RETURN { vertex: v, edge: e, path: p }
+  `;
+
+	try {
+		return await adb_query_all( db, query );
+	} catch ( e ) {
+		error( "ADB GRAPH TRAVERSAL ERROR: ", e.message );
+		return { vertices: [], paths: [] };
+	}
+};
+
+/**
  * Creates a collection in the database setting the indexes
  *
- * @param db 		ArangoDB database
- * @param name 		Name of the collection
- * @param idx 		Indexes to create
- * @param options 	Options to create the collection
+ * @param db        ArangoDB database
+ * @param name      Name of the collection to create
+ * @param idx       Indexes to create
+ * @param options   Options to create the collection
  *
- * @returns 		The collection
+ * @returns         The collection (either DocumentCollection or EdgeCollection)
  */
-export const adb_collection_init = async ( db: Database, name: string, idx: DBCollectionIndex[] = null, options: DBCollectionCreateOptions = null ) => {
+export const adb_collection_init = async ( db: Database, name: string, idx: DBCollectionIndex[] = null, options: DBCollectionCreateOptions = null ): Promise<DocumentCollection | EdgeCollection> => {
 	if ( !db ) return null;
 
 	const coll = await adb_collection_create( db, name, options );
@@ -410,22 +638,29 @@ export const adb_collection_init = async ( db: Database, name: string, idx: DBCo
 		await Promise.all( idx.map( async ( p ) => {
 			const fields = p.fields.join( '_' ).replace( "[*]", "" );
 			p.name = `idx_${ name }_${ fields }`;
-			// console.log( "NAME: ", p.name );
-
+			// @ts-ignore
 			if ( p.type != 'fulltext' ) {
 				try {
 					await coll.ensureIndex( p );
 				} catch ( e ) {
-					console.error( "ERROR CREATING INDEX: ", p.name, " FOR COLL: ", name );
+					error( "ERROR CREATING INDEX:", p.name, "FOR COLLECTION:", name, e.message );
 				}
 			}
 
-			// TODO: fulltext indexes need much more love ;-)
-			if ( p.type == 'fulltext' ) ft_fields[ fields ] = { "analyzers": [ "norm_it", "identity" ], "includeAllFields": false, "storeValues": "none", "trackListPositions": false };
+			// Fulltext index handling
+			// @ts-ignore
+			if ( p.type == 'fulltext' ) {
+				ft_fields[ fields ] = {
+					"analyzers": [ "norm_it", "identity" ],
+					"includeAllFields": false,
+					"storeValues": "none",
+					"trackListPositions": false
+				};
+			}
 		} ) );
 	}
 
-	// If the collection has fulltext indexes, we need to create a special view
+	// View creation for fulltext indexes
 	if ( Object.keys( ft_fields ).length ) {
 		const v_name = `v_${ name }`;
 		const views = await db.listViews();
@@ -538,7 +773,6 @@ export const adb_prepare_filters = ( prefix: string, data: any, extra_values?: a
 	return [ [ ...searchers, ...filters ].join( '\n    ' ) + limit, values ];
 };
 
-
 /**
  * Counts the number of documents in a collection
  *
@@ -567,28 +801,9 @@ export const adb_count = async ( db: Database, coll_name: string, data: any ) =>
 export const adb_find_all = async ( db: Database, coll_name: string, data: any = undefined, data_type: any = undefined, options?: CollectionFindAllOptions ) => {  //rows = 0, skip = 0 ) => {
 	if ( !data ) data = {};
 
-	const [ filters, values ] = adb_prepare_filters( 'o', data );
-	let limit = '';
-	let { skip = 0, rows = 0 } = options || {};
-	const _sort: string[] = [];
-	let sort = "";
+	const [ query, values ] = _prep_aql_query( coll_name, data, options );
 
-	if ( skip && !rows ) rows = skip + 9999999;
-
-	options?.sort && options.sort.forEach( ( opt: SortOptions ) => {
-		if ( opt.desc )
-			_sort.push( `o.${ opt.field } DESC` );
-		else
-			_sort.push( `o.${ opt.field }` );
-	} );
-
-	if ( _sort.length )
-		sort = `SORT ${ _sort.join( ', ' ) }`;
-
-	if ( rows > 0 )
-		limit = `\n   LIMIT ${ skip }, ${ rows }`;
-
-	return await adb_query_all( db, `\nFOR o IN ${ coll_name }\n  ${ sort } ${ filters } ${ limit } \nRETURN o`, values, data_type, { count: options?.count } );
+	return await adb_query_all( db, `${ query }RETURN o`, values, data_type, { count: options?.count } );
 };
 
 export const adb_find_by_affinity = async ( db: Database, coll_name: string, tags: string[], skip_ids: string[] = [] ) => {
@@ -638,6 +853,177 @@ export const adb_find_one = async ( db: Database, coll_name: string, data: any, 
 };
 
 /**
+ * Builds an AQL query with joins based on multiple collection specifications
+ *
+ * @param db          ArangoDB database
+ * @param specs       Array of query specifications for each collection to join
+ * @param data_type   If present, result list will be filtered before returning
+ * @param options     Global query options
+ * @returns           Query results
+ */
+
+export const adb_find_with_joins = async ( db: Database, specs: QueryJoinSpec[], data_type?: any, options?: QueryOptions ) => {
+	if ( !db || !specs || specs.length === 0 ) return [];
+
+	// Validate specs
+	for ( const spec of specs ) {
+		if ( !spec.coll_name ) {
+			error( "ADB JOIN ERROR: Collection name is required for all specs" );
+			return [];
+		}
+		// Validate join_condition format to prevent AQL injection
+		if ( spec.join_condition ) {
+			// Check for dangerous patterns but allow more complex expressions
+			const dangerous = /(\bDROP\b|\bDELETE\b|\bINSERT\b|\bUPDATE\b|\bREMOVE\b|\bREPLACE\b|;|\\\|\/\*|\*\/)/i;
+			if ( dangerous.test( spec.join_condition ) ) {
+				error( "ADB JOIN ERROR: Potentially dangerous join condition detected" );
+				return [];
+			}
+		}
+	}
+
+	const all_values: any = {};
+	const query_parts: string[] = [];
+	const return_parts: string[] = [];
+	const renamed_fields: string[] = [];
+	let global_sort = '';
+	let global_limit = '';
+
+	function _build_return_object ( spec: QueryJoinSpec ) {
+		const prefix = spec.prefix;
+		const exclude_fields: string[] = [];
+		const original_renamed_fields: string[] = []; // Track original field names that are being renamed
+
+		// Separate include and exclude fields
+		if ( spec.exclude && spec.exclude.length > 0 ) {
+			exclude_fields.push( ...spec.exclude.map( f => f.trim() ) );
+		}
+
+		if ( spec.fields && spec.fields.length > 0 ) {
+			const include_fields: string[] = [];
+
+			spec.fields.forEach( f => {
+				if ( f.includes( ':' ) ) {
+					const parts = f.split( ':' );
+					if ( parts.length !== 2 ) {
+						console.error( "ADB JOIN ERROR: Invalid field format in join spec", f );
+						return;
+					}
+					const trimmed = parts.map( p => p.trim() );
+					renamed_fields.push( `${ trimmed[ 1 ] }: ${ prefix }.${ trimmed[ 0 ] }` );
+					original_renamed_fields.push( trimmed[ 0 ] ); // Track the original field name
+				} else {
+					include_fields.push( f.trim() );
+				}
+			} );
+
+			if ( include_fields.length > 0 ) {
+				const fields_str = include_fields.map( f => `"${ f }"` ).join( ', ' );
+				const kept_object = `KEEP(${ prefix }, ${ fields_str })`;
+
+				// If we have renamed fields, exclude their original names from the kept object
+				if ( original_renamed_fields.length > 0 ) {
+					const all_excludes = [ ...exclude_fields, ...original_renamed_fields ];
+					const exclude_str = all_excludes.map( f => `"${ f }"` ).join( ', ' );
+					return `UNSET(${ kept_object }, ${ exclude_str })`;
+				} else if ( exclude_fields.length > 0 ) {
+					const exclude_str = exclude_fields.map( f => `"${ f }"` ).join( ', ' );
+					return `UNSET(${ kept_object }, ${ exclude_str })`;
+				} else {
+					return kept_object;
+				}
+			} else {
+				// Only renamed fields specified, exclude original names from full object
+				const all_excludes = [ ...exclude_fields, ...original_renamed_fields ];
+				if ( all_excludes.length > 0 ) {
+					const exclude_str = all_excludes.map( f => `"${ f }"` ).join( ', ' );
+					return `UNSET(${ prefix }, ${ exclude_str })`;
+				} else {
+					return `${ prefix }`;
+				}
+			}
+		} else {
+			// No fields specified, just apply excludes
+			if ( exclude_fields.length > 0 ) {
+				const exclude_str = exclude_fields.map( f => `"${ f }"` ).join( ', ' );
+				return `UNSET(${ prefix }, ${ exclude_str })`;
+			} else {
+				return `${ prefix }`;
+			}
+		}
+	}
+
+	// Process each collection specification
+	specs.forEach( ( spec, index ) => {
+		const prefix = spec.prefix || `o${ index + 1 }`;
+
+		spec.prefix = prefix;
+
+		// Generate query parts for this collection
+		const [ query, values ] = _prep_aql_query(
+			spec.coll_name,
+			spec.data,
+			spec.options,
+			prefix
+		);
+
+		Object.assign( all_values, values );
+
+		const query_lines = query.split( '\n' ).filter( ( line: string ) => line.trim() );
+
+		query_lines.forEach( ( line: string ) => {
+			const trimmed = line.trim();
+			if ( trimmed.startsWith( 'FOR ' ) ) {
+				query_parts.push( trimmed );
+			} else if ( trimmed.startsWith( 'SORT ' ) && !global_sort ) {
+				// Use the first SORT clause as global sort
+				global_sort = trimmed;
+			} else if ( trimmed.startsWith( 'LIMIT ' ) && !global_limit ) {
+				// Use the first LIMIT clause as global limit
+				global_limit = trimmed;
+			} else if ( trimmed.startsWith( 'FILTER ' ) || trimmed.startsWith( 'SEARCH ' ) ) {
+				query_parts.push( `  ${ trimmed }` );
+			}
+		} );
+
+		// Add join condition if specified
+		if ( spec.join_condition ) {
+			query_parts.push( `  FILTER ${ spec.join_condition }` );
+		}
+
+		// Add to return parts
+		return_parts.push( _build_return_object( spec ) );
+	} );
+
+	// Handle global options
+	if ( options?.skip || options?.rows ) {
+		const skip = options.skip || 0;
+		const rows = options.rows || skip + 9999999;
+		global_limit = `LIMIT ${ skip }, ${ rows }`;
+	}
+
+	// Build final query
+	const query_string = [
+		...query_parts,
+		global_sort,
+		global_limit,
+		`RETURN MERGE(${ return_parts.join( ', ' ) } ${ renamed_fields.length > 0 ? `, { ${ renamed_fields.join( ', ' ) }}` : '' })`
+	].filter( Boolean ).join( '\n' );
+
+	if ( cfg.debug?.query_dump ) {
+		console.log( "AQL JOIN query: ", query_string, all_values );
+	}
+
+	try {
+		const result = await adb_query_all( db, query_string, all_values, data_type, options );
+		return result;
+	} catch ( e ) {
+		error( "ADB JOIN ERROR: ", e.message );
+		return [];
+	}
+};
+
+/**
  * removes one element from a collection
  *
  * @param db          the database to query onto
@@ -647,7 +1033,7 @@ export const adb_find_one = async ( db: Database, coll_name: string, data: any, 
 export const adb_del_one = async ( db: Database, coll_name: string, data: any ) => {
 	const r = await adb_find_one( db, coll_name, data );
 	if ( !r ) return;
-	const coll: DocumentCollection = db.collection( coll_name );
+	const coll = _collection_get( db, coll_name, true ) as DocumentCollection | EdgeCollection;
 	if ( !coll ) return;
 
 	await coll.remove( r._id );
@@ -670,7 +1056,7 @@ export const adb_del_all = async ( db: Database, coll_name: string, data: any ) 
 };
 
 export const adb_del_all_raw = async ( db: Database, coll_name: string, elems: any[] ) => {
-	const coll: DocumentCollection = db.collection( coll_name );
+	const coll = _collection_get( db, coll_name, true ) as DocumentCollection | EdgeCollection;
 	if ( !coll ) return [];
 
 	const ids: string[] = elems.map( ( el ) => el.id );
@@ -678,4 +1064,47 @@ export const adb_del_all_raw = async ( db: Database, coll_name: string, elems: a
 	await Promise.all( elems.map( ( el ) => coll.remove( el._id ) ) );
 
 	return ids;
+};
+
+/**
+ * Removes all edges from an edge collection by _from or _to.
+ * @param db
+ * @param coll_name
+ * @param fromId
+ * @param toId
+ * @returns number of deleted edges
+ */
+export const adb_del_edges = async ( db: Database, coll_name: string, from?: any, to?: any ) => {
+	const coll = _collection_get( db, coll_name, true ) as EdgeCollection;
+	if ( !coll ) return 0;
+
+	const fromId = from?._id;
+	const toId = to?._id;
+
+	let filter = '';
+	const params: any = {};
+	if ( fromId && toId ) {
+		filter = 'FILTER e._from == @fromId AND e._to == @toId';
+		params.fromId = fromId;
+		params.toId = toId;
+	} else if ( fromId ) {
+		filter = 'FILTER e._from == @fromId';
+		params.fromId = fromId;
+	} else if ( toId ) {
+		filter = 'FILTER e._to == @toId';
+		params.toId = toId;
+	} else {
+		return 0;
+	}
+
+	const query = `
+        FOR e IN ${ coll_name }
+            ${ filter }
+            REMOVE e IN ${ coll_name }
+        	RETURN OLD._id
+    `;
+
+	const res = await db.query( query, params );
+	const removed = await res.all();
+	return removed.length;
 };
