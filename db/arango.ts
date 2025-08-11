@@ -66,6 +66,8 @@ export interface QueryJoinSpec {
 	join_condition?: string;
 	/** Fields to include in the result */
 	fields?: string[];
+	/** Fields to exclude from the result */
+	exclude?: string[];
 }
 
 const _check_default_analyzers = async ( db: Database ) => {
@@ -859,8 +861,26 @@ export const adb_find_one = async ( db: Database, coll_name: string, data: any, 
  * @param options     Global query options
  * @returns           Query results
  */
+
 export const adb_find_with_joins = async ( db: Database, specs: QueryJoinSpec[], data_type?: any, options?: QueryOptions ) => {
 	if ( !db || !specs || specs.length === 0 ) return [];
+
+	// Validate specs
+	for ( const spec of specs ) {
+		if ( !spec.coll_name ) {
+			error( "ADB JOIN ERROR: Collection name is required for all specs" );
+			return [];
+		}
+		// Validate join_condition format to prevent AQL injection
+		if ( spec.join_condition ) {
+			// Check for dangerous patterns but allow more complex expressions
+			const dangerous = /(\bDROP\b|\bDELETE\b|\bINSERT\b|\bUPDATE\b|\bREMOVE\b|\bREPLACE\b|;|\\\|\/\*|\*\/)/i;
+			if ( dangerous.test( spec.join_condition ) ) {
+				error( "ADB JOIN ERROR: Potentially dangerous join condition detected" );
+				return [];
+			}
+		}
+	}
 
 	const all_values: any = {};
 	const query_parts: string[] = [];
@@ -871,50 +891,73 @@ export const adb_find_with_joins = async ( db: Database, specs: QueryJoinSpec[],
 
 	function _build_return_object ( spec: QueryJoinSpec ) {
 		const prefix = spec.prefix;
+		const exclude_fields: string[] = [];
+		const original_renamed_fields: string[] = []; // Track original field names that are being renamed
+
+		// Separate include and exclude fields
+		if ( spec.exclude && spec.exclude.length > 0 ) {
+			exclude_fields.push( ...spec.exclude.map( f => f.trim() ) );
+		}
 
 		if ( spec.fields && spec.fields.length > 0 ) {
 			const include_fields: string[] = [];
-			const exclude_fields: string[] = [];
 
-			// Separate include and exclude fields
 			spec.fields.forEach( f => {
-				if ( f.startsWith( '-' ) ) {
-					exclude_fields.push( f.substring( 1 ) );
-				} else {
-					if ( f.includes( ':' ) ) {
-						const parts = f.split( ':' );
-						if ( parts.length !== 2 ) {
-							console.error( "ADB JOIN ERROR: Invalid field format in join spec", f );
-							return;
-						}
-						const trimmed = parts.map( p => p.trim() );
-						renamed_fields.push( `${ trimmed[ 1 ] }: ${ prefix }.${ trimmed[ 0 ] }` );
-						exclude_fields.push( trimmed[ 0 ] );
-					} else {
-						include_fields.push( f );
+				if ( f.includes( ':' ) ) {
+					const parts = f.split( ':' );
+					if ( parts.length !== 2 ) {
+						console.error( "ADB JOIN ERROR: Invalid field format in join spec", f );
+						return;
 					}
+					const trimmed = parts.map( p => p.trim() );
+					renamed_fields.push( `${ trimmed[ 1 ] }: ${ prefix }.${ trimmed[ 0 ] }` );
+					original_renamed_fields.push( trimmed[ 0 ] ); // Track the original field name
+				} else {
+					include_fields.push( f.trim() );
 				}
 			} );
 
 			if ( include_fields.length > 0 ) {
 				const fields_str = include_fields.map( f => `"${ f }"` ).join( ', ' );
-				return `KEEP(${ prefix }, ${ fields_str })`;
-			} else if ( exclude_fields.length > 0 ) {
+				const kept_object = `KEEP(${ prefix }, ${ fields_str })`;
+
+				// If we have renamed fields, exclude their original names from the kept object
+				if ( original_renamed_fields.length > 0 ) {
+					const all_excludes = [ ...exclude_fields, ...original_renamed_fields ];
+					const exclude_str = all_excludes.map( f => `"${ f }"` ).join( ', ' );
+					return `UNSET(${ kept_object }, ${ exclude_str })`;
+				} else if ( exclude_fields.length > 0 ) {
+					const exclude_str = exclude_fields.map( f => `"${ f }"` ).join( ', ' );
+					return `UNSET(${ kept_object }, ${ exclude_str })`;
+				} else {
+					return kept_object;
+				}
+			} else {
+				// Only renamed fields specified, exclude original names from full object
+				const all_excludes = [ ...exclude_fields, ...original_renamed_fields ];
+				if ( all_excludes.length > 0 ) {
+					const exclude_str = all_excludes.map( f => `"${ f }"` ).join( ', ' );
+					return `UNSET(${ prefix }, ${ exclude_str })`;
+				} else {
+					return `${ prefix }`;
+				}
+			}
+		} else {
+			// No fields specified, just apply excludes
+			if ( exclude_fields.length > 0 ) {
 				const exclude_str = exclude_fields.map( f => `"${ f }"` ).join( ', ' );
 				return `UNSET(${ prefix }, ${ exclude_str })`;
 			} else {
-				// Return the whole object if no valid fields
 				return `${ prefix }`;
 			}
-		} else {
-			// Return the whole object
-			return `${ prefix }`;
 		}
-	};
+	}
 
 	// Process each collection specification
 	specs.forEach( ( spec, index ) => {
 		const prefix = spec.prefix || `o${ index + 1 }`;
+
+		spec.prefix = prefix;
 
 		// Generate query parts for this collection
 		const [ query, values ] = _prep_aql_query(
