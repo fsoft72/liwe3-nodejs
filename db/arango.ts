@@ -39,7 +39,7 @@ export interface DBCollectionCreateOptions {
 	edge?: boolean;
 }
 
-interface SortOptions {
+export interface SortOptions {
 	field: string;
 	desc?: number;
 }
