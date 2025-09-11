@@ -306,10 +306,15 @@ class Ascii85 {
 
 		if ( digits ) {
 			const padding = ASCII85_DECODING_GROUP_LENGTH - digits;
-			cur = cur * ( ASCII85_BASE ** padding );
+			
+			// Pad with the character that represents 84 (which is 'u')
+			for ( let i = 0; i < padding; i++ ) {
+				cur = cur * ASCII85_BASE + 84;
+			}
 
-			for ( let i = ASCII85_ENCODING_GROUP_LENGTH - 1; i >= padding; i-- ) {
-				const byte = ( cur >>> ( i * 8 ) ) & 0xFF;
+			// Extract the original data bytes (not including padding)
+			for ( let i = 0; i < digits - 1; i++ ) {
+				const byte = ( cur >>> ( (ASCII85_ENCODING_GROUP_LENGTH - 1 - i) * 8 ) ) & 0xFF;
 				output.writeUInt8( byte, offset++ );
 			}
 		}
