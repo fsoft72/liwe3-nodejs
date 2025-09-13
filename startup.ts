@@ -322,7 +322,7 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 	} );
 
 	const http = liwe.app.listen( liwe.port, () => {
-		console.log( `${ liwe.app_name } started on port: ${ liwe.port }.  http://localhost:${ liwe.port }` );
+		info( `${ liwe.app_name } started on port: ${ liwe.port }.  http://localhost:${ liwe.port }` );
 	} );
 
 	if ( liwe.app.socket ) liwe.app.socket.init( http, liwe.port + 1 );
