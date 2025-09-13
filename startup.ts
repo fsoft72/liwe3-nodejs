@@ -327,7 +327,7 @@ export const server = async ( modules: string[], options: LiWEServerOptions = {}
 
 	if ( liwe.app.socket ) liwe.app.socket.init( http, liwe.port + 1 );
 
-	if ( liwe.cfg?.debug?.enabled ) console.log( '\n== App started in DEBUG MODE ==' );
+	if ( liwe.cfg?.debug?.enabled ) warn( 'App started in DEBUG MODE' );
 
 	return liwe;
 };
